@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veles Finance Agent</title>
+<link rel="stylesheet" href="/ui/styles.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+<style>
+  :root { --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; --font-mono: 'JetBrains Mono', 'Fira Code', monospace; }
+  @property --rainbow-angle{syntax:'<angle>';inherits:true;initial-value:0deg}
+  html,body,#root{height:100%;margin:0}
+  body{
+    font-family:var(--font-sans);
+    background:#0c0c0e;
+    color:var(--text-primary);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+    overflow:hidden;
+    animation:veles-spin 3s linear infinite;
+  }
+  @keyframes veles-spin{to{--rainbow-angle:360deg}}
+  *::-webkit-scrollbar{width:8px}
+  *::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px}
+  .veles-mesh{
+    background:
+      radial-gradient(60% 55% at 72% 12%, #2c2c34 0%, transparent 78%),
+      radial-gradient(55% 50% at 22% 22%, #202026 0%, transparent 80%),
+      radial-gradient(70% 60% at 50% 58%, #242429 0%, transparent 82%),
+      radial-gradient(60% 55% at 50% 100%, #33333b 0%, transparent 80%),
+      radial-gradient(55% 60% at 8% 92%, #1c1c22 0%, transparent 78%),
+      radial-gradient(55% 60% at 95% 88%, #232329 0%, transparent 78%),
+      #070709;
+    background-size:150% 150%;
+    filter:blur(90px);
+    transform:scale(1.4);
+    animation:veles-flow 30s ease-in-out infinite;
+  }
+  @keyframes veles-flow{
+    0%{background-position:0% 0%}
+    50%{background-position:100% 100%}
+    100%{background-position:0% 0%}
+  }
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  .streaming-cursor{display:inline-block;width:2px;height:1em;background:rgba(205,183,255,0.8);margin-left:2px;vertical-align:text-bottom;animation:blink 1s step-end infinite}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="/ui/_ds_bundle.js"></script>
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect, useCallback } = React;
+
+/* ═══════════════════════════════════════════════════════════════
+   BACKEND — Veles Finance FastAPI (порт 3003)
+   ═══════════════════════════════════════════════════════════════ */
+const BACKEND = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+  ? "http://localhost:3003"
+  : window.location.origin;
+
+/* ═══════════════════════════════════════════════════════════════
+   ThinkingViz
+   ═══════════════════════════════════════════════════════════════ */
+const ACCENT = "#cdb7ff";
+const tvText = { fontFamily: "var(--font-sans)", fontSize: 13.5, color: "var(--text-secondary)", letterSpacing: "-0.01em" };
+
+function detectType(q = "") {
+  const s = q.toLowerCase();
+  if (/(valuat|dcf|fair value|worth|оцінк|вартіст)/.test(s)) return "valuation";
+  if (/(risk|ризик|exposure|liquidity|credit)/.test(s)) return "risk";
+  if (/(market|trend|ринок|price|stock|candle)/.test(s)) return "market";
+  return "diligence";
+}
+
+const STEPS = {
+  diligence: ["Parsing filings…", "Charting revenue…", "Scoring risk exposure…", "Mapping competitors…"],
+  risk: ["Market risk…", "Credit risk…", "Liquidity risk…", "Operational risk…"],
+  valuation: ["Projecting cash flows…", "Applying discount rate…", "Adding terminal value…", "Deriving fair value…"],
+  market: ["Fetching price history…", "Building candles…", "Reading momentum…", "Detecting trend…"],
+};
+
+function VizDiligence() {
+  return (
+    <div style={{ display: "flex", gap: 16, alignItems: "stretch" }}>
+      <svg width="190" height="92" viewBox="0 0 190 92" style={{ flexShrink: 0 }}>
+        <line x1="6" y1="78" x2="184" y2="78" stroke="rgba(255,255,255,0.12)" />
+        <polyline className="tv-draw" points="8,70 38,58 64,62 92,40 120,46 150,22 182,14"
+          fill="none" stroke={ACCENT} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        {[[8,70],[38,58],[64,62],[92,40],[120,46],[150,22],[182,14]].map(([x,y],i)=>(
+          <circle key={i} cx={x} cy={y} r="2.6" fill={ACCENT} className="tv-dot" style={{ animationDelay: `${0.5+i*0.12}s` }} />
+        ))}
+      </svg>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 11, color: "var(--text-tertiary)", marginBottom: 5 }}>Risk exposure</div>
+          <div style={{ height: 6, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+            <div className="tv-meter" style={{ height: "100%", background: ACCENT, borderRadius: 99 }} />
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          {["NW","Hx","Vl","Kr"].map((c,i)=>(
+            <span key={c} className="tv-chip" style={{ animationDelay: `${1.4+i*0.18}s`, width: 28, height: 28,
+              borderRadius: 8, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+              color: "var(--text-secondary)", fontFamily: "var(--font-mono)" }}>{c}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VizRisk() {
+  const cx = 95, cy = 70, R = 54;
+  const pts = [[0,-1],[0.95,-0.31],[0.59,0.81],[-0.59,0.81],[-0.95,-0.31]];
+  const poly = pts.map(([x,y])=>`${cx+x*R*0.78},${cy+y*R*0.78}`).join(" ");
+  return (
+    <svg width="190" height="140" viewBox="0 0 190 140">
+      {[0.4,0.7,1].map((r,gi)=>(
+        <polygon key={gi} points={pts.map(([x,y])=>`${cx+x*R*r},${cy+y*R*r}`).join(" ")}
+          fill="none" stroke="rgba(255,255,255,0.10)" />
+      ))}
+      {pts.map(([x,y],i)=>(
+        <line key={i} x1={cx} y1={cy} x2={cx+x*R} y2={cy+y*R} stroke="rgba(255,255,255,0.08)" />
+      ))}
+      <polygon className="tv-radar" points={poly} fill={ACCENT+"33"} stroke={ACCENT} strokeWidth="2" />
+      {pts.map(([x,y],i)=>(
+        <circle key={i} cx={cx+x*R*0.78} cy={cy+y*R*0.78} r="3" fill={ACCENT} className="tv-dot"
+          style={{ animationDelay: `${0.6+i*0.22}s` }} />
+      ))}
+    </svg>
+  );
+}
+
+function VizValuation() {
+  const rows = [["Yr1","2.1"],["Yr2","2.9"],["Yr3","3.8"],["TV","18.4"]];
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, width: 200 }}>
+      {rows.map(([k,v],i)=>(
+        <React.Fragment key={k}>
+          <div style={{ fontSize: 12, color: "var(--text-tertiary)", display: "flex", alignItems: "center",
+            padding: "6px 8px", background: "rgba(255,255,255,0.04)", borderRadius: 7 }}>{k}</div>
+          <div className="tv-cell" style={{ animationDelay: `${0.3+i*0.25}s`, fontFamily: "var(--font-mono)",
+            fontSize: 14, color: "var(--text-primary)", padding: "6px 8px", background: "rgba(255,255,255,0.06)",
+            borderRadius: 7, textAlign: "right" }}>${v}M</div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+function VizMarket() {
+  const candles = [[60,18,1],[52,22,0],[58,16,1],[64,20,1],[55,24,0],[68,18,1],[62,26,0],[72,16,1],[78,20,1],[70,22,0],[82,18,1],[90,24,1]];
+  return (
+    <svg width="220" height="100" viewBox="0 0 220 100">
+      {candles.map(([h,wick,up],i)=>{
+        const x = 12 + i*16, top = 86-h, col = up ? "#9fe6c4" : "#e6a8a8";
+        return (
+          <g key={i} className="tv-candle" style={{ animationDelay: `${0.2+i*0.13}s`, transformOrigin: `${x+3}px 86px` }}>
+            <line x1={x+3} y1={top-wick/2} x2={x+3} y2={86-h+h+wick/2-h} stroke={col} strokeWidth="1" opacity="0.6" />
+            <rect x={x} y={top} width="7" height={h*0.5} rx="1.5" fill={col} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+const VIZ = { diligence: VizDiligence, risk: VizRisk, valuation: VizValuation, market: VizMarket };
+
+function VelesThinking({ type = "diligence" }) {
+  const steps = STEPS[type] || STEPS.diligence;
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setIdx((i) => (i + 1) % steps.length), 1100);
+    return () => clearInterval(id);
+  }, [type]);
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [type]);
+  const Viz = VIZ[type] || VizDiligence;
+
+  return (
+    <div style={{ maxWidth: 460 }}>
+      <div style={{ position: "relative", overflow: "hidden", borderRadius: 18, padding: "16px 18px",
+        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
+        backdropFilter: "blur(20px) saturate(160%)", WebkitBackdropFilter: "blur(20px) saturate(160%)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10)" }}>
+        <div className="tv-shimmer" aria-hidden="true" />
+        <div style={{ minHeight: 92, display: "flex", alignItems: "center" }}><Viz /></div>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingLeft: 2 }}>
+        <span className="tv-spark"><i data-lucide="sparkles" style={{ width: 14, height: 14, color: ACCENT }}></i></span>
+        <span key={idx} className="tv-fadein" style={tvText}>{steps[idx]}</span>
+      </div>
+      <style>{`
+        .tv-draw{stroke-dasharray:420;stroke-dashoffset:420;animation:tvDraw 1.6s var(--ease-soft) forwards}
+        @keyframes tvDraw{to{stroke-dashoffset:0}}
+        .tv-dot{opacity:0;animation:tvPop .4s var(--ease-soft) forwards}
+        @keyframes tvPop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+        .tv-meter{width:0;animation:tvMeter 1.6s .6s var(--ease-soft) forwards}
+        @keyframes tvMeter{to{width:64%}}
+        .tv-chip{opacity:0;animation:tvChip .5s var(--ease-soft) forwards}
+        @keyframes tvChip{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .tv-radar{opacity:0;transform-origin:center;animation:tvRadar 1.2s .3s var(--ease-soft) forwards}
+        @keyframes tvRadar{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:scale(1)}}
+        .tv-cell{opacity:0;animation:tvCell .5s var(--ease-soft) forwards}
+        @keyframes tvCell{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+        .tv-candle{opacity:0;animation:tvCandle .4s var(--ease-soft) forwards}
+        @keyframes tvCandle{from{opacity:0;transform:scaleY(0)}to{opacity:1;transform:scaleY(1)}}
+        .tv-fadein{animation:tvFade .45s var(--ease-soft)}
+        @keyframes tvFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+        .tv-spark{display:inline-flex;animation:tvSpin 3s linear infinite}
+        @keyframes tvSpin{to{transform:rotate(360deg)}}
+        .tv-shimmer{position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(205,183,255,0.10) 50%,transparent 70%);background-size:220% 100%;animation:tvShim 2.4s linear infinite;pointer-events:none}
+        @keyframes tvShim{to{background-position:-220% 0}}
+      `}</style>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Sidebar
+   ═══════════════════════════════════════════════════════════════ */
+const sbPanel = {
+  width: 272, flexShrink: 0, height: "100%", boxSizing: "border-box",
+  display: "flex", flexDirection: "column", gap: 14, padding: "18px 14px",
+  background: "rgba(7,7,10,0.66)", backdropFilter: "blur(30px) saturate(150%)",
+  WebkitBackdropFilter: "blur(30px) saturate(150%)",
+  borderRight: "1px solid rgba(255,255,255,0.06)",
+};
+const sbSearch = {
+  width: "100%", boxSizing: "border-box", border: "1px solid rgba(255,255,255,0.10)",
+  background: "rgba(255,255,255,0.05)", borderRadius: 12, padding: "9px 12px 9px 34px",
+  color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: 13.5, outline: "none",
+};
+
+function VelesSidebar({ sessions, active, onSelect, onNew }) {
+  const [q, setQ] = useState("");
+
+  const grouped = React.useMemo(() => {
+    const now = Date.now();
+    const today = [], yesterday = [], older = [];
+    sessions.forEach(s => {
+      const diff = (now - s.updatedAt) / 86400000;
+      if (diff < 1) today.push(s);
+      else if (diff < 2) yesterday.push(s);
+      else older.push(s);
+    });
+    return [
+      { label: "Today", items: today },
+      { label: "Yesterday", items: yesterday },
+      { label: "Last week", items: older },
+    ].filter(g => g.items.length > 0);
+  }, [sessions]);
+
+  const filtered = grouped.map(g => ({
+    ...g,
+    items: g.items.filter(s => s.title.toLowerCase().includes(q.toLowerCase()))
+  })).filter(g => g.items.length > 0);
+
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+  return (
+    <aside style={sbPanel}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "2px 6px 6px" }}>
+        <span style={{ width: 26, height: 26, borderRadius: 8, padding: 1.5, background: "var(--rainbow)",
+          display: "inline-flex" }}>
+          <span style={{ width: "100%", height: "100%", borderRadius: 7, background: "#0c0c10",
+            display: "inline-flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13 }}>V</span>
+        </span>
+        <span style={{ fontWeight: 600, fontSize: 15 }}>Veles</span>
+      </div>
+
+      <button onClick={onNew}
+        style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", boxSizing: "border-box",
+          padding: "11px 14px", borderRadius: 12, cursor: "pointer", color: "var(--text-primary)",
+          background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.14)",
+          fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 500 }}>
+        <i data-lucide="plus" style={{ width: 16, height: 16 }}></i> New chat
+      </button>
+
+      <div style={{ position: "relative" }}>
+        <i data-lucide="search" style={{ width: 15, height: 15, position: "absolute", left: 12, top: 10,
+          color: "var(--text-tertiary)" }}></i>
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search chats" style={sbSearch} />
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 16, marginTop: 4 }}>
+        {filtered.length === 0 && (
+          <div style={{ fontSize: 13, color: "var(--text-tertiary)", textAlign: "center", paddingTop: 24 }}>
+            No chats yet. Start one!
+          </div>
+        )}
+        {filtered.map((sec) => (
+          <div key={sec.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <div style={{ fontSize: 11, letterSpacing: "0.06em", textTransform: "uppercase",
+              color: "var(--text-tertiary)", padding: "2px 10px 6px" }}>{sec.label}</div>
+            {sec.items.map((s) => {
+              const on = s.id === active;
+              return (
+                <button key={s.id} onClick={() => onSelect(s.id)}
+                  style={{ display: "flex", alignItems: "center", gap: 9, width: "100%", boxSizing: "border-box",
+                    textAlign: "left", padding: "9px 10px", borderRadius: 9, cursor: "pointer", border: "none",
+                    background: on ? "rgba(255,255,255,0.09)" : "transparent",
+                    color: on ? "var(--text-primary)" : "var(--text-secondary)",
+                    fontFamily: "var(--font-sans)", fontSize: 13.5, whiteSpace: "nowrap", overflow: "hidden",
+                    textOverflow: "ellipsis" }}>
+                  <i data-lucide="message-square" style={{ width: 14, height: 14, flexShrink: 0, opacity: 0.7 }}></i>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{s.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontSize: 11.5, color: "var(--text-tertiary)", padding: "6px 10px",
+        borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 12 }}>
+        Veles Finance Agent v2.2.0
+      </div>
+    </aside>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Tools badge strip
+   ═══════════════════════════════════════════════════════════════ */
+const TOOL_ICONS = {
+  get_market_data:       { icon: "trending-up",   label: "Market data" },
+  due_diligence_report:  { icon: "shield-check",  label: "Due diligence" },
+  kelly_position_size:   { icon: "percent",       label: "Kelly criterion" },
+  fetch_sec_10k_tool:    { icon: "file-text",     label: "SEC 10-K" },
+};
+
+function ToolBadges({ tools }) {
+  if (!tools || tools.length === 0) return null;
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+      {tools.map(t => {
+        const meta = TOOL_ICONS[t] || { icon: "zap", label: t };
+        return (
+          <span key={t} style={{ display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "3px 10px 3px 8px", borderRadius: 999,
+            background: "rgba(205,183,255,0.10)", border: "1px solid rgba(205,183,255,0.22)",
+            fontSize: 11.5, color: "rgba(205,183,255,0.85)", fontFamily: "var(--font-sans)" }}>
+            <i data-lucide={meta.icon} style={{ width: 11, height: 11 }}></i>
+            {meta.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Composer
+   ═══════════════════════════════════════════════════════════════ */
+const pillBtn = { display: "inline-flex", alignItems: "center", gap: "8px", padding: "9px 16px",
+  borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)",
+  color: "var(--text-secondary)", fontFamily: "var(--font-sans)", fontSize: "14px", cursor: "pointer" };
+
+function Composer({ onSend, thinking }) {
+  const [val, setVal] = useState("");
+  const [focused, setFocused] = useState(false);
+  const taRef = useRef(null);
+
+  const send = () => {
+    const t = val.trim();
+    if (!t || thinking) return;
+    onSend(t);
+    setVal("");
+    if (taRef.current) taRef.current.style.height = "auto";
+  };
+
+  const handleInput = () => {
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.min(ta.scrollHeight, 160) + "px";
+  };
+
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+  return (
+    <div style={{ position: "relative", padding: thinking ? "2px" : "1px", borderRadius: "26px",
+      background: thinking
+        ? "conic-gradient(from var(--rainbow-angle), rgba(255,255,255,0.10) 0deg, rgba(255,255,255,0.10) 210deg, #3da5ff 250deg, #8a4dff 285deg, #ff2d9b 315deg, #ff8a3d 345deg, rgba(255,255,255,0.10) 360deg)"
+        : (focused ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.10)"),
+      boxShadow: thinking ? "var(--shadow-island), 0 0 26px rgba(138,77,255,0.22)" : "var(--shadow-island)",
+      transition: "padding var(--dur-med) var(--ease-soft)" }}>
+      <div style={{ position: "relative", overflow: "hidden", background: thinking ? "rgba(14,14,20,0.86)" : "rgba(36,38,48,0.42)", backdropFilter: "blur(40px) saturate(200%) brightness(1.12)",
+        WebkitBackdropFilter: "blur(40px) saturate(200%) brightness(1.12)", borderRadius: "24px", padding: "16px 18px",
+        boxShadow: "inset 0 1.5px 0.5px rgba(255,255,255,0.45), inset 0 0 0 0.5px rgba(255,255,255,0.10), inset 0 -10px 22px rgba(0,0,0,0.35)" }}>
+        <div aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "24px", pointerEvents: "none",
+          background: "linear-gradient(150deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 22%, rgba(255,255,255,0) 45%)" }} />
+        <textarea
+          ref={taRef}
+          value={val} rows={1}
+          onChange={(e) => setVal(e.target.value)}
+          onInput={handleInput}
+          onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Ask Veles anything about a stock, SEC filing, or position size…"
+          disabled={thinking}
+          style={{ width: "100%", border: "none", outline: "none", resize: "none", background: "transparent",
+            color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: "16px", lineHeight: 1.5,
+            maxHeight: 160, overflowY: "auto", opacity: thinking ? 0.5 : 1 }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <button style={pillBtn} onClick={() => onSend("Run due diligence on NVDA for moderate risk profile")}>
+              <i data-lucide="shield-check" style={{ width: 16, height: 16 }}></i> Due diligence
+            </button>
+            <button style={{ ...pillBtn, padding: 9, borderRadius: "999px" }} aria-label="SEC filing"
+              onClick={() => onSend("Fetch the latest 10-K for AAPL from SEC EDGAR")}>
+              <i data-lucide="file-text" style={{ width: 16, height: 16 }}></i>
+            </button>
+          </div>
+          <button onClick={send} disabled={thinking}
+            style={{ width: 44, height: 44, borderRadius: "999px", border: "none",
+              cursor: thinking ? "not-allowed" : "pointer", background: "#fff", opacity: thinking ? 0.5 : 1,
+              display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            <i data-lucide={thinking ? "loader" : "arrow-up"} style={{ width: 18, height: 18, color: "#0a0a0f",
+              animation: thinking ? "tvSpin 1s linear infinite" : "none" }}></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Markdown renderer
+   ═══════════════════════════════════════════════════════════════ */
+function renderMarkdown(raw) {
+  if (!raw) return { __html: "" };
+  let t = raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  t = t.replace(/```(?:\w+\n)?([\s\S]*?)```/g, (_, code) =>
+    `<pre style="background:rgba(255,255,255,0.05);border-radius:8px;padding:12px 16px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;margin:10px 0;white-space:pre-wrap">${code.trim()}</pre>`
+  );
+  t = t.replace(/`([^`]+)`/g, `<code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px;font-family:var(--font-mono);font-size:0.88em">$1</code>`);
+  t = t.replace(/\*\*\*(.+?)\*\*\*/gs, "<strong><em>$1</em></strong>");
+  t = t.replace(/\*\*(.+?)\*\*/gs, "<strong>$1</strong>");
+  t = t.replace(/__(.+?)__/gs, "<strong>$1</strong>");
+  t = t.replace(/\*(.+?)\*/gs, "<em>$1</em>");
+  t = t.replace(/^#### (.+)$/gm, `<div style="margin:8px 0 2px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:rgba(255,255,255,.45)">$1</div>`);
+  t = t.replace(/^### (.+)$/gm, `<div style="margin:10px 0 3px;font-size:13px;font-weight:600;color:var(--text-primary)">$1</div>`);
+  t = t.replace(/^## (.+)$/gm, `<div style="margin:12px 0 4px;font-size:14px;font-weight:700;color:var(--text-primary)">$1</div>`);
+  t = t.replace(/^# (.+)$/gm, `<div style="margin:12px 0 4px;font-size:15px;font-weight:700;color:var(--text-primary)">$1</div>`);
+  t = t.replace(/^---+$/gm, `<hr style="border:none;border-top:1px solid rgba(255,255,255,.10);margin:8px 0">`);
+  t = t.replace(/^[ \t]*[-*•] (.+)$/gm, `<div style="display:flex;gap:6px;margin:1px 0"><span style="opacity:.5;flex-shrink:0">•</span><span>$1</span></div>`);
+  t = t.replace(/^(\d+)\. (.+)$/gm, `<div style="display:flex;gap:6px;margin:1px 0"><span style="opacity:.5;flex-shrink:0;min-width:14px">$1.</span><span>$2</span></div>`);
+  t = t.replace(/\n{2,}/g, `</p><p style="margin:5px 0">`);
+  t = t.replace(/\n/g, "<br>");
+  t = `<p style="margin:0">${t}</p>`;
+  return { __html: t };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Bubble
+   ═══════════════════════════════════════════════════════════════ */
+function Bubble({ role, children, tools }) {
+  const { Avatar, Card } = window.VelesDesignSystem_1bfbc8;
+  const ai = role === "ai";
+
+  const baseStyle = {
+    fontSize: "15px", lineHeight: 1.65, color: "var(--text-primary)",
+    fontFamily: ai ? "'Inter', sans-serif" : "var(--font-sans)",
+    letterSpacing: ai ? "-0.011em" : "normal",
+    wordBreak: "break-word",
+  };
+
+  const content = ai
+    ? <div>
+        <ToolBadges tools={tools} />
+        <div style={baseStyle} dangerouslySetInnerHTML={renderMarkdown(children)} />
+      </div>
+    : <div style={{ ...baseStyle, whiteSpace: "pre-wrap" }}>{children}</div>;
+
+  if (ai) {
+    return <div style={{ maxWidth: "84%" }}>{content}</div>;
+  }
+  return (
+    <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", flexDirection: "row-reverse" }}>
+      <Avatar label="U" size={34} />
+      <div style={{ maxWidth: "76%" }}>
+        <Card padding="14px 18px"
+          style={{ borderRadius: "20px 6px 20px 20px", background: "rgba(255,255,255,0.09)" }}>
+          {content}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ChatScreen
+   ═══════════════════════════════════════════════════════════════ */
+function ChatScreen() {
+  const [sessions, setSessions] = useState(() => {
+    try {
+      const s = localStorage.getItem("veles_sessions");
+      return s ? JSON.parse(s) : [];
+    } catch { return []; }
+  });
+
+  const [activeId, setActiveId] = useState(() => {
+    try { return localStorage.getItem("veles_active") || null; } catch { return null; }
+  });
+
+  const [allMsgs, setAllMsgs] = useState(() => {
+    try {
+      const m = localStorage.getItem("veles_messages");
+      return m ? JSON.parse(m) : {};
+    } catch { return {}; }
+  });
+
+  useEffect(() => {
+    try { localStorage.setItem("veles_sessions", JSON.stringify(sessions)); } catch {}
+  }, [sessions]);
+
+  useEffect(() => {
+    try { if (activeId) localStorage.setItem("veles_active", activeId); } catch {}
+  }, [activeId]);
+
+  useEffect(() => {
+    try { localStorage.setItem("veles_messages", JSON.stringify(allMsgs)); } catch {}
+  }, [allMsgs]);
+
+  const [thinking, setThinking] = useState(false);
+  const [thinkType, setThinkType] = useState("diligence");
+  const [sbOpen, setSbOpen] = useState(true);
+  const [error, setError] = useState(null);
+  const scrollRef = useRef(null);
+
+  const msgs = allMsgs[activeId] || [];
+  const title = sessions.find(s => s.id === activeId)?.title || "Veles Finance";
+
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+  useEffect(() => {
+    const sc = scrollRef.current;
+    if (!sc) return;
+    const t = setTimeout(() => { sc.scrollTop = sc.scrollHeight; }, 50);
+    return () => clearTimeout(t);
+  }, [allMsgs, thinking, activeId]);
+
+  const newChat = useCallback(() => {
+    const id = "s" + Date.now();
+    const s = { id, title: "New chat", updatedAt: Date.now() };
+    setSessions(prev => [s, ...prev]);
+    setAllMsgs(prev => ({ ...prev, [id]: [] }));
+    setActiveId(id);
+  }, []);
+
+  const send = useCallback(async (userText) => {
+    if (thinking) return;
+    setError(null);
+
+    let sid = activeId;
+    if (!sid) {
+      sid = "s" + Date.now();
+      const s = { id: sid, title: userText.slice(0, 42) + (userText.length > 42 ? "…" : ""), updatedAt: Date.now() };
+      setSessions(prev => [s, ...prev]);
+      setAllMsgs(prev => ({ ...prev, [sid]: [] }));
+      setActiveId(sid);
+    } else {
+      setSessions(prev => prev.map(s =>
+        s.id === sid
+          ? { ...s, title: userText.slice(0, 42) + (userText.length > 42 ? "…" : ""), updatedAt: Date.now() }
+          : s
+      ));
+    }
+
+    const newUserMsg = { role: "user", text: userText };
+    setAllMsgs(prev => ({
+      ...prev,
+      [sid]: [...(prev[sid] || []), newUserMsg]
+    }));
+
+    setThinkType(detectType(userText));
+    setThinking(true);
+
+    try {
+      // Build history for the backend (all prior turns in this session)
+      const priorMsgs = allMsgs[sid] || [];
+      const history = priorMsgs.map(m => ({
+        role: m.role === "ai" ? "assistant" : "user",
+        content: m.text,
+      }));
+
+      const res = await fetch(`${BACKEND}/agent`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userText, history }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Server error ${res.status}: ${errText}`);
+      }
+
+      const data = await res.json();
+      const aiMsg = {
+        role: "ai",
+        text: data.answer || "",
+        tools: data.tools_used || [],
+        steps: data.steps || 0,
+      };
+
+      setAllMsgs(prev => ({
+        ...prev,
+        [sid]: [...(prev[sid] || []), aiMsg],
+      }));
+
+    } catch (err) {
+      setError(err.message);
+      setAllMsgs(prev => ({
+        ...prev,
+        [sid]: [...(prev[sid] || []), { role: "ai", text: `⚠️ ${err.message}`, tools: [] }],
+      }));
+    } finally {
+      setThinking(false);
+    }
+  }, [activeId, allMsgs, thinking]);
+
+  const iconBtn = { width: 38, height: 38, borderRadius: "50%", cursor: "pointer",
+    display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)",
+    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" };
+
+  const QUICK = [
+    "Run due diligence on NVDA — moderate risk",
+    "Fetch SEC 10-K for AAPL",
+    "What's the market data for TSLA?",
+    "Kelly criterion: 65% win rate, 2.5x payout",
+  ];
+
+  return (
+    <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex" }}>
+      {sbOpen && <VelesSidebar sessions={sessions} active={activeId} onSelect={setActiveId} onNew={newChat} />}
+
+      <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "16px 28px", borderBottom: "1px solid rgba(255,255,255,0.07)", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+            <button style={iconBtn} aria-label="Toggle chats" onClick={() => setSbOpen(v => !v)}>
+              <i data-lucide={sbOpen ? "panel-left-close" : "panel-left-open"} style={{ width: 16, height: 16 }}></i>
+            </button>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden",
+                textOverflow: "ellipsis" }}>{title}</div>
+              <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                Veles Finance · Due diligence · SEC EDGAR · Kelly
+              </div>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <a href="/docs" target="_blank"
+              style={{ ...iconBtn, textDecoration: "none" }} aria-label="API docs">
+              <i data-lucide="book-open" style={{ width: 16, height: 16 }}></i>
+            </a>
+            <a href={`${BACKEND}/health`} target="_blank"
+              style={{ ...iconBtn, textDecoration: "none" }} aria-label="Backend health">
+              <i data-lucide="activity" style={{ width: 16, height: 16 }}></i>
+            </a>
+          </div>
+        </header>
+
+        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column",
+          maxWidth: 760, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
+          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column",
+            gap: 18, padding: "24px 0 20px" }}>
+            {msgs.length === 0 && (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", gap: 20, paddingTop: 60 }}>
+                <span style={{ width: 52, height: 52, borderRadius: 14, padding: 3, background: "var(--rainbow)",
+                  display: "inline-flex" }}>
+                  <span style={{ width: "100%", height: "100%", borderRadius: 11, background: "#0c0c10",
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    fontWeight: 700, fontSize: 22, color: "var(--text-primary)" }}>V</span>
+                </span>
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 6 }}>Veles Finance Agent</div>
+                  <div style={{ fontSize: 14, color: "var(--text-secondary)" }}>
+                    Institutional-grade analysis. Live market data. SEC EDGAR.
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, width: "100%", maxWidth: 520 }}>
+                  {QUICK.map(q => (
+                    <button key={q} onClick={() => send(q)}
+                      style={{ padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.10)",
+                        background: "rgba(255,255,255,0.04)", color: "var(--text-secondary)",
+                        fontFamily: "var(--font-sans)", fontSize: 13.5, cursor: "pointer", textAlign: "left" }}>
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {msgs.map((m, i) => (
+              <Bubble key={i} role={m.role === "ai" ? "ai" : "user"} tools={m.tools}>
+                {m.text || ""}
+              </Bubble>
+            ))}
+            {thinking && <VelesThinking type={thinkType} />}
+          </div>
+          <div style={{ paddingBottom: 24, flexShrink: 0 }}>
+            <Composer onSend={send} thinking={thinking} />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   App
+   ═══════════════════════════════════════════════════════════════ */
+function App() {
+  React.useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, []);
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#08080a" }}>
+      <div aria-hidden="true" className="veles-mesh" style={{ position: "absolute", inset: 0 }}></div>
+      <ChatScreen />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

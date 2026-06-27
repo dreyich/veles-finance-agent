@@ -1,0 +1,13 @@
+FROM C:\Users\aandr\.ollama\models\blobs\sha256-45ad6e6286c6db57ebba09d3824e2129bb14394b5a21c7ada6e61450ece4cbc8
+
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+PARAMETER temperature 0.1
+PARAMETER num_ctx 4096

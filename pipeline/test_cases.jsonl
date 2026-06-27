@@ -1,0 +1,20 @@
+{"ticker": "AAPL", "input": "Analyse AAPL for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "TSLA", "input": "Analyse TSLA for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "MSFT", "input": "Analyse MSFT for a moderate risk investor. Provide a full Due Diligence report.", "expected_verdict": "APPROVED"}
+{"ticker": "NVDA", "input": "Analyse NVDA for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "JNJ", "input": "Analyse JNJ for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "GME", "input": "Analyse GME for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "GOOGL", "input": "Analyse GOOGL for a moderate investor. Provide a full Due Diligence report.", "expected_verdict": "APPROVED"}
+{"ticker": "AMZN", "input": "Analyse AMZN for an aggressive investor. Provide a full Due Diligence report.", "expected_verdict": "APPROVED"}
+{"ticker": "META", "input": "Analyse META for a moderate investor. Provide a full Due Diligence report.", "expected_verdict": "APPROVED"}
+{"ticker": "RIVN", "input": "Analyse RIVN for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "PLTR", "input": "Analyse PLTR for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "KO", "input": "Analyse KO (Coca-Cola) for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "AMD", "input": "Analyse AMD for an aggressive investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "INTC", "input": "Analyse INTC for a moderate investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "SPY", "input": "Analyse SPY (S&P 500 ETF) for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "AAPL", "input": "What is the Kelly Criterion position size for AAPL if my win rate is 60% and payout ratio is 1.5?", "expected_verdict": null}
+{"ticker": "NVDA", "input": "Analyse NVDA for an aggressive investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "BRK-B", "input": "Analyse BRK-B for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "APPROVED"}
+{"ticker": "COIN", "input": "Analyse COIN for a conservative investor. Provide a full Due Diligence report.", "expected_verdict": "REJECTED"}
+{"ticker": "MSFT", "input": "Analyse MSFT for a conservative investor. Is it suitable?", "expected_verdict": "REJECTED"}

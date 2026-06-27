@@ -1,0 +1,212 @@
+{
+  "timestamp": "2026-06-27T20:51:06.650340",
+  "baseline_accuracy": 94.3,
+  "veles_agent_accuracy": 100.0,
+  "total_tests": 20,
+  "verdict_tests": 19,
+  "verdict_passed": 19,
+  "open_ended_passed": "1/1",
+  "total_time_s": 198.6,
+  "results": [
+    {
+      "idx": 1,
+      "ticker": "AAPL",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 11.0,
+      "response_preview": "REJECTED: P/E 34.4x exceeds conservative threshold of 25x; Beta 1.09 exceeds conservative ceiling of 1.0",
+      "error": null
+    },
+    {
+      "idx": 2,
+      "ticker": "TSLA",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.6,
+      "response_preview": "REJECTED: P/E 345.2x exceeds conservative threshold of 25x; Beta 1.80 exceeds conservative ceiling of 1.0",
+      "error": null
+    },
+    {
+      "idx": 3,
+      "ticker": "MSFT",
+      "expected": "APPROVED",
+      "got": "APPROVED",
+      "passed": true,
+      "time_s": 7.6,
+      "response_preview": "APPROVED: P/E 22.2x within moderate threshold (35x); Beta 1.10 within moderate tolerance; Strong margin 39.3%",
+      "error": null
+    },
+    {
+      "idx": 4,
+      "ticker": "NVDA",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.9,
+      "response_preview": "REJECTED: P/E 29.5x exceeds conservative threshold of 25x; Beta 2.20 exceeds conservative ceiling of 1.0",
+      "error": null
+    },
+    {
+      "idx": 5,
+      "ticker": "JNJ",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.6,
+      "response_preview": "REJECTED: P/E 29.5x exceeds conservative threshold of 25x",
+      "error": null
+    },
+    {
+      "idx": 6,
+      "ticker": "GME",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.9,
+      "response_preview": "REJECTED: Beta 1.77 exceeds conservative ceiling of 1.0",
+      "error": null
+    },
+    {
+      "idx": 7,
+      "ticker": "GOOGL",
+      "expected": "APPROVED",
+      "got": "APPROVED",
+      "passed": true,
+      "time_s": 8.2,
+      "response_preview": "APPROVED: P/E 25.7x within moderate threshold (35x); Beta 1.24 within moderate tolerance; Strong margin 37.9%",
+      "error": null
+    },
+    {
+      "idx": 8,
+      "ticker": "AMZN",
+      "expected": "APPROVED",
+      "got": "APPROVED",
+      "passed": true,
+      "time_s": 7.8,
+      "response_preview": "APPROVED: P/E 31.7x within aggressive threshold (60x); Beta 1.44 within aggressive tolerance; Analyst target $312.99 implies 35% upside",
+      "error": null
+    },
+    {
+      "idx": 9,
+      "ticker": "META",
+      "expected": "APPROVED",
+      "got": "APPROVED",
+      "passed": true,
+      "time_s": 7.9,
+      "response_preview": "APPROVED: P/E 20.0x within moderate threshold (35x); Beta 1.23 within moderate tolerance; Strong margin 32.8%",
+      "error": null
+    },
+    {
+      "idx": 10,
+      "ticker": "RIVN",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.8,
+      "response_preview": "REJECTED: Beta 1.62 exceeds conservative ceiling of 1.0; Negative profit margin (-63.6%)",
+      "error": null
+    },
+    {
+      "idx": 11,
+      "ticker": "PLTR",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.5,
+      "response_preview": "REJECTED: P/E 126.9x exceeds conservative threshold of 25x; Beta 1.51 exceeds conservative ceiling of 1.0",
+      "error": null
+    },
+    {
+      "idx": 12,
+      "ticker": "KO",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.7,
+      "response_preview": "REJECTED: P/E 26.0x exceeds conservative threshold of 25x",
+      "error": null
+    },
+    {
+      "idx": 13,
+      "ticker": "AMD",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.7,
+      "response_preview": "REJECTED: P/E 172.1x exceeds aggressive threshold of 60x; Beta 2.49 exceeds aggressive ceiling of 2.0",
+      "error": null
+    },
+    {
+      "idx": 14,
+      "ticker": "INTC",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.8,
+      "response_preview": "REJECTED: Beta 2.23 exceeds moderate ceiling of 1.4; Negative profit margin (-5.9%)",
+      "error": null
+    },
+    {
+      "idx": 15,
+      "ticker": "SPY",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 8.1,
+      "response_preview": "REJECTED: P/E 26.1x exceeds conservative threshold of 25x",
+      "error": null
+    },
+    {
+      "idx": 16,
+      "ticker": "AAPL",
+      "expected": null,
+      "got": "APPROVED",
+      "passed": true,
+      "time_s": 7.4,
+      "response_preview": "Full Kelly: 33.33%. Half Kelly recommended for live trading.",
+      "error": null
+    },
+    {
+      "idx": 17,
+      "ticker": "NVDA",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.4,
+      "response_preview": "REJECTED: Beta 2.20 exceeds aggressive ceiling of 2.0",
+      "error": null
+    },
+    {
+      "idx": 18,
+      "ticker": "BRK-B",
+      "expected": "APPROVED",
+      "got": "APPROVED",
+      "passed": true,
+      "time_s": 8.1,
+      "response_preview": "APPROVED: P/E 14.8x within conservative threshold (25x); Beta 0.62 within conservative tolerance; Strong margin 19.3%",
+      "error": null
+    },
+    {
+      "idx": 19,
+      "ticker": "COIN",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.8,
+      "response_preview": "REJECTED: P/E 55.0x exceeds conservative threshold of 25x; Beta 3.32 exceeds conservative ceiling of 1.0",
+      "error": null
+    },
+    {
+      "idx": 20,
+      "ticker": "MSFT",
+      "expected": "REJECTED",
+      "got": "REJECTED",
+      "passed": true,
+      "time_s": 7.5,
+      "response_preview": "REJECTED: Beta 1.10 exceeds conservative ceiling of 1.0",
+      "error": null
+    }
+  ]
+}

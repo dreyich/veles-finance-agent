@@ -9,6 +9,8 @@ from typing import Literal
 import yfinance as yf
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from langchain_core.messages import HumanMessage
 from openai import OpenAI
 from pydantic import BaseModel, Field
@@ -19,6 +21,18 @@ from agent.sec_tool import fetch_sec_10k, format_sec_report
 
 api = FastAPI(title="Veles Finance Agent", version="2.2.0")
 api.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+import pathlib
+_STATIC = pathlib.Path(__file__).parent / "static"
+if _STATIC.exists():
+    api.mount("/ui", StaticFiles(directory=str(_STATIC), html=True), name="static")
+
+@api.get("/")
+def root():
+    idx = _STATIC / "index.html"
+    if idx.exists():
+        return FileResponse(str(idx))
+    return {"status": "ok", "ui": "/ui", "docs": "/docs"}
 
 _VELES_BASE = os.getenv("VELES_BASE_URL", "http://localhost:11434/v1")
 _VELES_MODEL = os.getenv("VELES_MODEL", "veles")
@@ -318,8 +332,16 @@ async def agent_chat(req: AgentRequest):
     """
     from langchain_core.messages import AIMessage, HumanMessage as LCHuman, SystemMessage
 
-    # Build message history
-    messages = [LCHuman(content=req.message)]
+    # Build message history (prior turns + current message)
+    messages: list = []
+    for h in req.history:
+        role = h.get("role", "")
+        content = h.get("content", "")
+        if role == "user":
+            messages.append(LCHuman(content=content))
+        elif role == "assistant":
+            messages.append(AIMessage(content=content))
+    messages.append(LCHuman(content=req.message))
 
     # Run the agent graph
     result = langgraph_agent.invoke({"messages": messages})
@@ -337,7 +359,13 @@ async def agent_chat(req: AgentRequest):
                 tools_used.append(tc["name"])
             steps += 1
         if isinstance(m, AIMessage) and m.content and not getattr(m, "tool_calls", None):
-            final_answer = m.content
+            c = m.content
+            if isinstance(c, list):
+                final_answer = "".join(
+                    p.get("text", "") if isinstance(p, dict) else str(p) for p in c
+                )
+            else:
+                final_answer = c
 
     return AgentResponse(
         answer=final_answer or "Analysis complete. See tool results above.",

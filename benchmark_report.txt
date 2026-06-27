@@ -1,0 +1,37 @@
+=================================================================
+  VELES FINANCE AGENT — BENCHMARK REPORT
+  Date: 2026-06-27 20:51:06
+=================================================================
+
+RESULTS BY TEST CASE:
+-----------------------------------------------------------------
+  + [01] AAPL   | expected=REJECTED got=REJECTED | 11.0s
+  + [02] TSLA   | expected=REJECTED got=REJECTED | 7.6s
+  + [03] MSFT   | expected=APPROVED got=APPROVED | 7.6s
+  + [04] NVDA   | expected=REJECTED got=REJECTED | 7.9s
+  + [05] JNJ    | expected=REJECTED got=REJECTED | 7.6s
+  + [06] GME    | expected=REJECTED got=REJECTED | 7.9s
+  + [07] GOOGL  | expected=APPROVED got=APPROVED | 8.2s
+  + [08] AMZN   | expected=APPROVED got=APPROVED | 7.8s
+  + [09] META   | expected=APPROVED got=APPROVED | 7.9s
+  + [10] RIVN   | expected=REJECTED got=REJECTED | 7.8s
+  + [11] PLTR   | expected=REJECTED got=REJECTED | 7.5s
+  + [12] KO     | expected=REJECTED got=REJECTED | 7.7s
+  + [13] AMD    | expected=REJECTED got=REJECTED | 7.7s
+  + [14] INTC   | expected=REJECTED got=REJECTED | 7.8s
+  + [15] SPY    | expected=REJECTED got=REJECTED | 8.1s
+  + [16] AAPL   | open-ended | 7.4s
+  + [17] NVDA   | expected=REJECTED got=REJECTED | 7.4s
+  + [18] BRK-B  | expected=APPROVED got=APPROVED | 8.1s
+  + [19] COIN   | expected=REJECTED got=REJECTED | 7.8s
+  + [20] MSFT   | expected=REJECTED got=REJECTED | 7.5s
+
+=================================================================
+SUMMARY
+-----------------------------------------------------------------
+  Verdict accuracy:  19/19 = 100.0%
+  Baseline (v5):     94.3%
+  Difference:        +5.7%
+  Open-ended tests:  1/1 passed
+  Total time:        3.3 min
+=================================================================

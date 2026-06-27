@@ -1,0 +1,9 @@
+# Shell scripts must have LF line endings on all platforms (Linux RunPod)
+*.sh text eol=lf
+deploy/*.sh text eol=lf
+
+# Python — auto
+*.py text eol=auto
+
+# Everything else — auto
+* text=auto

@@ -1,0 +1,45 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log
+*.log.*
+
+# Env files — keep templates, ignore local secrets
+.env
+.env.local
+.env.*.local
+
+# Datasets & training artifacts (large files)
+datasets/
+golden_run/
+*.jsonl
+!test_cases.jsonl
+
+# Model weights
+*.gguf
+*.bin
+*.safetensors
+*.pt
+
+# Private upload scripts with secrets
+deploy/sync_secrets.sh
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# RunPod logs
+server.log
+server_err.log
+benchmark_live.log

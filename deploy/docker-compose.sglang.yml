@@ -1,0 +1,77 @@
+# docker-compose -f deploy/docker-compose.sglang.yml up
+#
+# Tests the full SGLang stack locally (requires NVIDIA Docker runtime + 24GB+ VRAM).
+# Set VELES_MERGED_PATH and HF_TOKEN before running.
+#
+# GPU split: Veles 7B ~7GB + Llama 8B ~8GB = ~15GB total → fits on 1x RTX 3090/4090
+
+services:
+  sglang-veles:
+    image: lmsysorg/sglang:latest
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+    volumes:
+      - "${VELES_MERGED_PATH:-/workspace/veles-merged}:/model"
+    command: >
+      python -m sglang.launch_server
+        --model-path /model
+        --served-model-name veles-finance-7b
+        --port 30000
+        --host 0.0.0.0
+        --grammar-backend xgrammar
+        --context-length 4096
+        --dtype bfloat16
+    ports:
+      - "30000:30000"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:30000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  sglang-llama:
+    image: lmsysorg/sglang:latest
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - HF_TOKEN=${HF_TOKEN}
+    command: >
+      python -m sglang.launch_server
+        --model-path meta-llama/Meta-Llama-3.1-8B-Instruct
+        --served-model-name llama3.1-8b-instruct
+        --port 30001
+        --host 0.0.0.0
+        --context-length 8192
+        --dtype bfloat16
+    ports:
+      - "30001:30001"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:30001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+
+  finance-api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    environment:
+      - VELES_BASE_URL=http://sglang-veles:30000/v1
+      - VELES_MODEL=veles-finance-7b
+      - VELES_API_KEY=EMPTY
+      - ORCHESTRATOR_BASE_URL=http://sglang-llama:30001/v1
+      - ORCHESTRATOR_MODEL=llama3.1-8b-instruct
+      - ORCHESTRATOR_API_KEY=EMPTY
+    ports:
+      - "3003:3003"
+    depends_on:
+      sglang-veles:
+        condition: service_healthy
+      sglang-llama:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3003/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 6

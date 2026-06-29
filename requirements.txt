@@ -3,8 +3,13 @@ uvicorn==0.34.0
 openai==1.59.3
 httpx==0.28.1
 yfinance==0.2.51
-langchain-core==0.3.29
+langchain-core>=0.3.30,<0.4.0
 langchain-openai==0.3.1
 langgraph==0.2.62
 pydantic==2.10.4
 typing-extensions==4.12.2
+huggingface_hub==0.27.0
+x402[fastapi,evm,extensions]>=2.14.0
+
+# MCP server
+mcp>=1.0.0

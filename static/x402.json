@@ -1,0 +1,61 @@
+{
+  "version": 2,
+  "name": "Veles Finance Agent",
+  "description": "AI-powered financial analysis: due diligence, SEC 10-K extraction, Kelly Criterion, YoY comparisons.",
+  "url": "https://veles-finance-gateway.fly.dev",
+  "payment": {
+    "network": "eip155:84532",
+    "asset": "USDC",
+    "assetAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "payTo": "0x115D1eCC5aDF0E43a74910FE6EbceAf38b806aA0",
+    "facilitator": "https://x402.org/facilitator"
+  },
+  "endpoints": [
+    {
+      "path": "/agent",
+      "method": "POST",
+      "description": "Full LangGraph agent: routes to all tools, supports multi-turn history.",
+      "priceUSDC": "0.05",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "message": {"type": "string"},
+          "history": {"type": "array", "items": {"type": "object"}}
+        },
+        "required": ["message"]
+      }
+    },
+    {
+      "path": "/due-diligence",
+      "method": "POST",
+      "description": "Stock due diligence verdict (APPROVED/REJECTED) with key factors.",
+      "priceUSDC": "0.02",
+      "queryParams": ["ticker", "risk_profile"]
+    },
+    {
+      "path": "/sec",
+      "method": "POST",
+      "description": "SEC EDGAR 10-K annual report extraction with parsed financials.",
+      "priceUSDC": "0.02",
+      "queryParams": ["ticker"]
+    },
+    {
+      "path": "/ask",
+      "method": "POST",
+      "description": "General financial question answered by Veles Finance 7B model.",
+      "priceUSDC": "0.02",
+      "inputSchema": {
+        "type": "object",
+        "properties": {"message": {"type": "string"}},
+        "required": ["message"]
+      }
+    },
+    {
+      "path": "/kelly",
+      "method": "POST",
+      "description": "Kelly Criterion position sizing: full and half-Kelly percentages.",
+      "priceUSDC": "0.01",
+      "queryParams": ["win_probability", "payout_ratio"]
+    }
+  ]
+}

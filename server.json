@@ -2,8 +2,33 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "dev.fly.veles-finance-gateway/veles-finance-mcp",
   "description": "AI financial agent: due diligence, SEC 10-K, Kelly Criterion. Pay-per-call via x402 USDC.",
-  "version": "1.0.0",
-  "packages": [],
+  "version": "1.0.1",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "veles-finance-mcp",
+      "version": "1.0.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "VELES_WALLET_KEY",
+          "description": "Base network private key with USDC for automatic x402 micropayments",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "VELES_GATEWAY_URL",
+          "description": "Override gateway URL (default: https://veles-finance-gateway.fly.dev)",
+          "isRequired": false,
+          "isSecret": false,
+          "format": "string"
+        }
+      ]
+    }
+  ],
   "tools": [
     {
       "name": "veles_agent",

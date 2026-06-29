@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "veles-finance-mcp"
-version = "1.0.0"
+version = "1.0.1"
 description = "MCP server for Veles Finance Agent — AI-powered financial analysis via x402 micropayments (USDC on Base)"
 readme = "README_MCP.md"
 license = { text = "MIT" }

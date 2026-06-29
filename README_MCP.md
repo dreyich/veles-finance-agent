@@ -1,5 +1,7 @@
 # Veles Finance MCP Server
 
+mcp-name: dev.fly.veles-finance-gateway/veles-finance-mcp
+
 AI-powered financial analysis via [Model Context Protocol](https://modelcontextprotocol.io). Each tool call is automatically paid with **$0.01–$0.05 USDC** on Base network via [x402](https://x402.org) protocol.
 
 ## Install

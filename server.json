@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "dev.fly.veles-finance-gateway/veles-finance-mcp",
+  "description": "AI financial agent: due diligence, SEC 10-K, Kelly Criterion. Pay-per-call via x402 USDC.",
+  "version": "1.0.0",
+  "packages": [],
+  "tools": [
+    {
+      "name": "veles_agent",
+      "description": "Full LangGraph financial agent. Cost: $0.05 USDC per call."
+    },
+    {
+      "name": "veles_due_diligence",
+      "description": "Stock screening APPROVED/REJECTED with P/E, beta, margins. Cost: $0.02 USDC."
+    },
+    {
+      "name": "veles_sec_10k",
+      "description": "Extract key financials from latest SEC 10-K via EDGAR. Cost: $0.02 USDC."
+    },
+    {
+      "name": "veles_ask",
+      "description": "Direct question to Veles-Finance-7B model. Cost: $0.02 USDC."
+    },
+    {
+      "name": "veles_kelly",
+      "description": "Kelly Criterion position sizing calculator. Cost: $0.01 USDC."
+    }
+  ]
+}

@@ -180,6 +180,11 @@ def well_known_x402():
     return json.loads((_STATIC / "x402.json").read_text())
 
 
+@gateway.get("/.well-known/mcp-registry-auth", response_class=PlainTextResponse)
+def mcp_registry_auth():
+    return "v=MCPv1; k=ed25519; p=+w+csrLiNQXqnyFzhqGmVXkNDkn6jrOTW0gfPvNWRsc="
+
+
 # ── Paid endpoints ─────────────────────────────────────────────────────────
 
 @gateway.post("/agent")

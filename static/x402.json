@@ -1,14 +1,14 @@
 {
   "version": 2,
   "name": "Veles Finance Agent",
-  "description": "AI-powered financial analysis: due diligence, SEC 10-K extraction, Kelly Criterion, YoY comparisons.",
+  "description": "AI-powered research and data-analytics tool: SEC 10-K extraction, public-filing risk summaries, Kelly Criterion calculator, and general finance Q&A. Informational and educational purposes only — not investment advice.",
   "url": "https://veles-finance-gateway.fly.dev",
   "payment": {
-    "network": "eip155:84532",
+    "network": "eip155:8453",
     "asset": "USDC",
-    "assetAddress": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-    "payTo": "0x115D1eCC5aDF0E43a74910FE6EbceAf38b806aA0",
-    "facilitator": "https://x402.org/facilitator"
+    "assetAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+    "payTo": "0xB686091302926c03D44d37C02A4183601F1F56B2",
+    "facilitator": "https://facilitator.payai.network"
   },
   "endpoints": [
     {
@@ -28,7 +28,7 @@
     {
       "path": "/due-diligence",
       "method": "POST",
-      "description": "Stock due diligence verdict (APPROVED/REJECTED) with key factors.",
+      "description": "Automated risk-factor summary compiled from public filings and market data.",
       "priceUSDC": "0.02",
       "queryParams": ["ticker", "risk_profile"]
     },
@@ -53,7 +53,7 @@
     {
       "path": "/kelly",
       "method": "POST",
-      "description": "Kelly Criterion position sizing: full and half-Kelly percentages.",
+      "description": "Kelly Criterion calculator (standard quantitative formula): full and half-Kelly percentages. Informational, not a trade recommendation.",
       "priceUSDC": "0.01",
       "queryParams": ["win_probability", "payout_ratio"]
     }

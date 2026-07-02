@@ -43,3 +43,5 @@ Thumbs.db
 server.log
 server_err.log
 benchmark_live.log
+
+.vercel

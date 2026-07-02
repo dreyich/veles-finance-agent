@@ -1,0 +1,7 @@
+{
+  "framework": null,
+  "installCommand": "echo skip",
+  "rewrites": [
+    { "source": "/", "destination": "/ui_kits/veles-chat/index.html" }
+  ]
+}

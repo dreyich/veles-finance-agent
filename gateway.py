@@ -4,7 +4,7 @@ import os
 import pathlib
 import httpx
 import uvicorn
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
@@ -18,7 +18,13 @@ _STATIC = pathlib.Path(__file__).parent / "static"
 
 RUNPOD_URL = os.getenv("RUNPOD_ENDPOINT_URL", "https://n3g2m4yio8un96.api.runpod.ai")
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
-WALLET = os.getenv("PAY_TO_ADDRESS", "0x115D1eCC5aDF0E43a74910FE6EbceAf38b806aA0")
+WALLET = os.getenv("PAY_TO_ADDRESS", "0xB686091302926c03D44d37C02A4183601F1F56B2")
+
+# Shared secret for the official web frontend only — NOT a substitute for real
+# subscription auth. Stopgap until MoR-issued session tokens are wired in;
+# anyone who extracts this from browser JS can call /web/agent for free, so
+# treat this route as provisional and add real per-user auth before public launch.
+WEB_SHARED_SECRET = os.getenv("WEB_SHARED_SECRET", "")
 
 # Defaults to x402.org's free testnet-only facilitator (Base Sepolia, no API key).
 # For production (Base mainnet, eip155:8453), two options:
@@ -220,6 +226,16 @@ async def sec(request: Request):
 @gateway.post("/kelly")
 async def kelly(request: Request):
     return await _proxy_params("/kelly", dict(request.query_params))
+
+
+# ── Web frontend endpoint (MoR-subscription gated, not x402) ───────────────
+# Deliberately excluded from _ROUTES so the x402 middleware never intercepts it.
+
+@gateway.post("/web/agent")
+async def web_agent(request: Request):
+    if not WEB_SHARED_SECRET or request.headers.get("x-web-secret") != WEB_SHARED_SECRET:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    return await _proxy_body("/agent", await request.json())
 
 
 if __name__ == "__main__":

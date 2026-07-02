@@ -1,0 +1,15 @@
+models/
+data/
+uploads/
+tokens/*.bin
+unsloth_compiled_cache/
+screenshots/
+template/
+deploy/
+*.gguf
+*.safetensors
+*.pdf
+venv_unsloth/
+.venv/
+node_modules/
+.git/

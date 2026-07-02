@@ -1,0 +1,33 @@
+/* Veles — Spacing, radii, effects */
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radii — soft, premium */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 999px;
+
+  /* Blur */
+  --blur-card: 16px;
+  --blur-island: 20px;
+
+  /* Shadows — deep, soft, no harsh edges */
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --shadow-island: 0 16px 60px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 40px rgba(138, 77, 255, 0.25);
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1); /* @kind other */
+  --dur-fast: 160ms; /* @kind other */
+  --dur-med: 320ms; /* @kind other */
+  --dur-slow: 600ms; /* @kind other */
+}

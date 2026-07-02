@@ -1,0 +1,82 @@
+<!-- @dsCard group="Veles Chat" viewport="1280x720" name="Analyst Chat" subtitle="Sidebar, chat, sources & metrics panel" -->
+<!-- @startingPoint section="Veles Chat" subtitle="Full dark glassmorphism analyst workspace" viewport="1280x720" -->
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veles — Chat</title>
+<link rel="stylesheet" href="../../styles.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+<style>
+  @property --rainbow-angle{syntax:'<angle>';inherits:true;initial-value:0deg}
+  html,body,#root{height:100%;margin:0}
+  body{
+    font-family:var(--font-sans);
+    background:#0c0c0e;
+    color:var(--text-primary);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    text-rendering:optimizeLegibility;
+    overflow:hidden;
+    animation:veles-spin 3s linear infinite;
+  }
+  @keyframes veles-spin{to{--rainbow-angle:360deg}}
+  *::-webkit-scrollbar{width:8px}
+  *::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px}
+  .veles-mesh{
+    background:
+      radial-gradient(60% 55% at 72% 12%, #2c2c34 0%, transparent 78%),
+      radial-gradient(55% 50% at 22% 22%, #202026 0%, transparent 80%),
+      radial-gradient(70% 60% at 50% 58%, #242429 0%, transparent 82%),
+      radial-gradient(60% 55% at 50% 100%, #33333b 0%, transparent 80%),
+      radial-gradient(55% 60% at 8% 92%, #1c1c22 0%, transparent 78%),
+      radial-gradient(55% 60% at 95% 88%, #232329 0%, transparent 78%),
+      #070709;
+    background-size:150% 150%;
+    filter:blur(90px);
+    transform:scale(1.4);
+    animation:veles-flow 30s ease-in-out infinite;
+  }
+  @keyframes veles-flow{
+    0%{background-position:0% 0%}
+    50%{background-position:100% 100%}
+    100%{background-position:0% 0%}
+  }
+</style>
+</head>
+<body>
+<!-- KNOWN TEMPORARY WEAKNESS: this secret is visible in page source / repo history.
+     It only exists to keep /web/agent off search engines and casual discovery until
+     real per-user auth (issued after MoR checkout) replaces it — do not treat this as
+     real access control, and do not point it at anything that costs money to serve. -->
+<script>
+  var isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+  window.VELES_GATEWAY_URL = isLocal ? "http://localhost:8080" : "https://veles-finance-gateway.fly.dev";
+  window.VELES_WEB_SECRET = isLocal ? "dev-local-secret" : "a6u0yGkuHhFFh5eFEGke4xqopBWWsGVy";
+  window.VELES_CONFIG_READY = Promise.resolve();
+</script>
+<div id="root"></div>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<script type="text/babel" src="Sidebar.jsx?v=2" data-presets="react"></script>
+<script type="text/babel" src="RightPanel.jsx?v=2" data-presets="react"></script>
+<script type="text/babel" src="ThinkingViz.jsx?v=2" data-presets="react"></script>
+<script type="text/babel" src="ChatScreen.jsx?v=2" data-presets="react"></script>
+<script type="text/babel" data-presets="react">
+  function App(){
+    React.useEffect(()=>{ if(window.lucide) window.lucide.createIcons(); },[]);
+    return (
+      <div style={{position:'fixed',inset:0,background:'#08080a'}}>
+        <div aria-hidden="true" className="veles-mesh" style={{position:'absolute',inset:0}}></div>
+        <window.ChatScreenWrap/>
+      </div>
+    );
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

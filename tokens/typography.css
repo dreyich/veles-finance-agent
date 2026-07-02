@@ -1,0 +1,30 @@
+/* Veles — Typography tokens. Geist: clean geometric sans. */
+:root {
+  --font-sans: "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale */
+  --text-display: 48px;
+  --text-h1: 34px;
+  --text-h2: 26px;
+  --text-h3: 20px;
+  --text-body-lg: 17px;
+  --text-body: 15px;
+  --text-sm: 13px;
+  --text-xs: 11px;
+
+  /* Weights */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* Line heights */
+  --leading-tight: 1.12;
+  --leading-snug: 1.32;
+  --leading-normal: 1.55;
+
+  /* Tracking */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.08em;
+}

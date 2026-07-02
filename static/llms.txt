@@ -1,0 +1,54 @@
+# Veles Finance Agent
+# x402 pay-per-request API — USDC on Base network
+
+## Overview
+AI-powered financial analysis service. Accepts payments via x402 protocol.
+Each request costs USDC on Base L2. Send POST request, receive HTTP 402 with
+payment instructions if unpaid, or JSON result if paid.
+
+## Base URL
+https://veles-finance-gateway.fly.dev
+
+## Endpoints
+
+### POST /agent — $0.05 USDC
+Full LangGraph orchestrator. Routes to market data, due diligence, SEC filings, Kelly.
+Request body: {"message": "string", "history": [{"role": "user/assistant", "content": "string"}]}
+Example: {"message": "Compare Apple revenue YoY vs Microsoft"}
+
+### POST /due-diligence — $0.02 USDC
+Deterministic stock verdict (APPROVED/REJECTED) based on P/E, beta, margins.
+Query params: ticker (string), risk_profile (conservative|moderate|aggressive)
+Example: POST /due-diligence?ticker=NVDA&risk_profile=aggressive
+
+### POST /sec — $0.02 USDC
+Latest SEC 10-K annual report extraction from EDGAR. Key financials parsed.
+Query params: ticker (string)
+Example: POST /sec?ticker=AAPL
+
+### POST /ask — $0.02 USDC
+General financial question answered by Veles 7B model.
+Request body: {"message": "string"}
+Example: {"message": "What is the P/E ratio of S&P 500 historically?"}
+
+### POST /kelly — $0.01 USDC
+Kelly Criterion position sizing calculator.
+Query params: win_probability (float 0-1), payout_ratio (float)
+Example: POST /kelly?win_probability=0.55&payout_ratio=2.0
+
+### GET /health — free
+Service health check. Returns backend URL and version.
+
+## Payment Details
+- Protocol: x402 v1
+- Network: Base (Ethereum L2, chain ID 8453)
+- Asset: USDC (0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
+- Recipient: 0x115D1eCC5aDF0E43a74910FE6EbceAf38b806aA0
+- Facilitator: https://x402.org/facilitator
+
+## x402 Flow
+1. Send POST request without payment header
+2. Receive HTTP 402 with JSON payment instructions
+3. Sign and broadcast USDC transfer on Base
+4. Resend request with X-PAYMENT header
+5. Receive financial analysis result

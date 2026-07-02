@@ -3,6 +3,7 @@ from datetime import datetime
 import yfinance as yf
 from langchain_core.tools import tool
 from .sec_tool import fetch_sec_10k_tool
+from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_stocks
 
 _MARKET_CAP_LABELS = [(1_000_000_000_000, "T"), (1_000_000_000, "B"), (1_000_000, "M")]
 
@@ -226,4 +227,12 @@ Optimal Position Sizing:
 """.strip()
 
 
-TOOLS = [get_market_data, due_diligence_report, kelly_position_size, fetch_sec_10k_tool]
+TOOLS = [
+    get_market_data,
+    due_diligence_report,
+    kelly_position_size,
+    fetch_sec_10k_tool,
+    compare_annual_reports,
+    get_earnings_calendar,
+    screen_stocks,
+]

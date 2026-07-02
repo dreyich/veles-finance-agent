@@ -1,6 +1,8 @@
 from __future__ import annotations
+import asyncio
 import json
 import os
+import pathlib
 import re
 import uvicorn
 from datetime import datetime
@@ -19,10 +21,9 @@ from agent.sec_tool import fetch_sec_10k, format_sec_report
 
 # ── App & client ──────────────────────────────────────────────────────────────
 
-api = FastAPI(title="Veles Finance Agent", version="2.2.0")
+api = FastAPI(title="Veles Finance Agent", version="2.4.0")
 api.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-import pathlib
 _STATIC = pathlib.Path(__file__).parent / "static"
 if _STATIC.exists():
     api.mount("/ui", StaticFiles(directory=str(_STATIC), html=True), name="static")
@@ -39,6 +40,8 @@ _VELES_MODEL = os.getenv("VELES_MODEL", "veles")
 _ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "llama3.2:3b")
 
 client = OpenAI(base_url=_VELES_BASE, api_key=os.getenv("VELES_API_KEY", "ollama"))
+
+_WARM_PROMPT = os.getenv("WARM_PROMPT", "Hi")
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
@@ -254,6 +257,23 @@ class AgentResponse(BaseModel):
     tools_used: list[str]
     steps: int
 
+@api.get("/ping")
+def ping():
+    return "OK"
+
+@api.post("/warm")
+async def warm():
+    """Pre-warming endpoint — called by frontend on page load to eliminate cold start."""
+    try:
+        resp = client.chat.completions.create(
+            model=_VELES_MODEL,
+            messages=[{"role": "user", "content": _WARM_PROMPT}],
+            max_tokens=1,
+        )
+        return {"status": "warm", "model": _VELES_MODEL}
+    except Exception as e:
+        return {"status": "warming", "detail": str(e)}
+
 @api.get("/health")
 def health():
     return {
@@ -261,7 +281,7 @@ def health():
         "orchestrator": _ORCHESTRATOR_MODEL,
         "extractor": _VELES_MODEL,
         "veles_backend": _VELES_BASE,
-        "version": "2.2.0",
+        "version": "2.4.0",
     }
 
 @api.post("/due-diligence", response_model=DueDiligenceResponse)
@@ -367,11 +387,29 @@ async def agent_chat(req: AgentRequest):
             else:
                 final_answer = c
 
-    return AgentResponse(
+    response = AgentResponse(
         answer=final_answer or "Analysis complete. See tool results above.",
-        tools_used=list(dict.fromkeys(tools_used)),  # deduplicate, preserve order
+        tools_used=list(dict.fromkeys(tools_used)),
         steps=steps,
     )
+
+    # Async trace logging — non-blocking
+    trace = {
+        "ts": datetime.utcnow().isoformat(),
+        "q": req.message,
+        "tools": response.tools_used,
+        "steps": response.steps,
+        "a": response.answer[:500],
+    }
+    asyncio.create_task(
+        asyncio.to_thread(
+            lambda: pathlib.Path("traces.jsonl")
+            .open("a", encoding="utf-8")
+            .write(json.dumps(trace) + "\n")
+        )
+    )
+
+    return response
 
 
 if __name__ == "__main__":

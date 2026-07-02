@@ -21,9 +21,13 @@ RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
 WALLET = os.getenv("PAY_TO_ADDRESS", "0x115D1eCC5aDF0E43a74910FE6EbceAf38b806aA0")
 
 # Defaults to x402.org's free testnet-only facilitator (Base Sepolia, no API key).
-# For production, set X402_NETWORK=eip155:8453 and X402_FACILITATOR_URL=
-# https://api.cdp.coinbase.com/platform/v2/x402, plus CDP_API_KEY_ID and
-# CDP_API_KEY_SECRET env vars (picked up automatically by HTTPFacilitatorClient).
+# For production (Base mainnet, eip155:8453), two options:
+#   1. CDP (Coinbase): requires a verified Coinbase Business Account.
+#      Set X402_FACILITATOR_URL=https://api.cdp.coinbase.com/platform/v2/x402
+#      plus CDP_API_KEY_ID / CDP_API_KEY_SECRET env vars.
+#   2. PayAI: no business verification or API key needed up to 10k
+#      settlements/month. Set X402_FACILITATOR_URL=https://facilitator.payai.network
+# Either way, also set X402_NETWORK=eip155:8453.
 NETWORK = os.getenv("X402_NETWORK", "eip155:84532")
 FACILITATOR_URL = os.getenv("X402_FACILITATOR_URL", "https://x402.org/facilitator")
 

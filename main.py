@@ -393,7 +393,8 @@ async def agent_chat(req: AgentRequest):
         steps=steps,
     )
 
-    # Async trace logging — non-blocking
+    # Async trace logging — non-blocking. Written to the network volume
+    # (persists across worker restarts) instead of the ephemeral container disk.
     trace = {
         "ts": datetime.utcnow().isoformat(),
         "q": req.message,
@@ -401,11 +402,10 @@ async def agent_chat(req: AgentRequest):
         "steps": response.steps,
         "a": response.answer[:500],
     }
+    _traces_path = pathlib.Path(os.getenv("TRACES_PATH", "/runpod-volume/traces.jsonl"))
     asyncio.create_task(
         asyncio.to_thread(
-            lambda: pathlib.Path("traces.jsonl")
-            .open("a", encoding="utf-8")
-            .write(json.dumps(trace) + "\n")
+            lambda: _traces_path.open("a", encoding="utf-8").write(json.dumps(trace) + "\n")
         )
     )
 

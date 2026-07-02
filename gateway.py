@@ -19,10 +19,16 @@ _STATIC = pathlib.Path(__file__).parent / "static"
 RUNPOD_URL = os.getenv("RUNPOD_ENDPOINT_URL", "https://n3g2m4yio8un96.api.runpod.ai")
 RUNPOD_API_KEY = os.getenv("RUNPOD_API_KEY", "")
 WALLET = os.getenv("PAY_TO_ADDRESS", "0x115D1eCC5aDF0E43a74910FE6EbceAf38b806aA0")
-NETWORK = "eip155:84532"  # Base Sepolia (v2 facilitator supports this; mainnet when available)
+
+# Defaults to x402.org's free testnet-only facilitator (Base Sepolia, no API key).
+# For production, set X402_NETWORK=eip155:8453 and X402_FACILITATOR_URL=
+# https://api.cdp.coinbase.com/platform/v2/x402, plus CDP_API_KEY_ID and
+# CDP_API_KEY_SECRET env vars (picked up automatically by HTTPFacilitatorClient).
+NETWORK = os.getenv("X402_NETWORK", "eip155:84532")
+FACILITATOR_URL = os.getenv("X402_FACILITATOR_URL", "https://x402.org/facilitator")
 
 # ── x402 v2 server setup ───────────────────────────────────────────────────
-facilitator = HTTPFacilitatorClient({"url": "https://x402.org/facilitator"})
+facilitator = HTTPFacilitatorClient({"url": FACILITATOR_URL})
 x402_server = x402ResourceServer(facilitator)
 x402_server.register("eip155:*", ExactEvmServerScheme())
 x402_server.register_extension(bazaar_resource_server_extension)

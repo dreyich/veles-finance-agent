@@ -1,48 +1,99 @@
-<!-- @dsCard group="Veles Chat" viewport="1280x720" name="Analyst Chat" subtitle="Sidebar, chat, sources & metrics panel" -->
-<!-- @startingPoint section="Veles Chat" subtitle="Full dark glassmorphism analyst workspace" viewport="1280x720" -->
+<!-- @dsCard group="Veles Chat" viewport="1280x720" name="Analyst Chat" subtitle="Sky liquid-glass workspace — sidebar, chat" -->
+<!-- @startingPoint section="Veles Chat" subtitle="Light liquid-glass analyst workspace" viewport="1280x720" -->
 <!DOCTYPE html>
 <html lang="uk">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Veles — Chat</title>
-<link rel="stylesheet" href="../../styles.css" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" />
 <style>
   @property --rainbow-angle{syntax:'<angle>';inherits:true;initial-value:0deg}
+  :root{
+    --font-sans:'Inter',ui-sans-serif,system-ui,'Segoe UI',sans-serif;
+    --font-mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,monospace;
+    --ink-1:#1b2431;
+    --ink-2:#4e5d72;
+    --ink-3:#8593a4;
+    --text-primary:var(--ink-1);
+    --text-secondary:var(--ink-2);
+    --text-tertiary:var(--ink-3);
+    --hair:rgba(27,36,49,0.08);
+    --accent:#3776e0;
+    --panel:rgba(255,255,255,0.62);
+    --ease-soft:cubic-bezier(0.32,0.72,0,1);
+    --dur-med:.45s;
+    --shadow-pop:0 12px 34px rgba(31,54,84,0.16),0 2px 8px rgba(31,54,84,0.08);
+  }
   html,body,#root{height:100%;margin:0}
   body{
     font-family:var(--font-sans);
-    background:#0c0c0e;
-    color:var(--text-primary);
+    font-optical-sizing:auto;
+    letter-spacing:-0.01em;
+    color:var(--ink-1);
+    background:#c9dff2;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     text-rendering:optimizeLegibility;
     overflow:hidden;
-    animation:veles-spin 3s linear infinite;
+    animation:veles-spin 4s linear infinite;
   }
   @keyframes veles-spin{to{--rainbow-angle:360deg}}
-  *::-webkit-scrollbar{width:8px}
-  *::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px}
-  .veles-mesh{
-    background:
-      radial-gradient(60% 55% at 72% 12%, #2c2c34 0%, transparent 78%),
-      radial-gradient(55% 50% at 22% 22%, #202026 0%, transparent 80%),
-      radial-gradient(70% 60% at 50% 58%, #242429 0%, transparent 82%),
-      radial-gradient(60% 55% at 50% 100%, #33333b 0%, transparent 80%),
-      radial-gradient(55% 60% at 8% 92%, #1c1c22 0%, transparent 78%),
-      radial-gradient(55% 60% at 95% 88%, #232329 0%, transparent 78%),
-      #070709;
-    background-size:150% 150%;
-    filter:blur(90px);
-    transform:scale(1.4);
-    animation:veles-flow 30s ease-in-out infinite;
+  button,input,textarea{font-family:inherit;letter-spacing:inherit}
+  *::-webkit-scrollbar{width:8px;height:8px}
+  *::-webkit-scrollbar-thumb{background:rgba(27,36,49,0.16);border-radius:8px}
+  *::-webkit-scrollbar-track{background:transparent}
+  ::selection{background:rgba(55,118,224,0.18)}
+  :focus-visible{outline:2px solid rgba(55,118,224,0.55);outline-offset:2px;border-radius:6px}
+
+  /* ---- Morning-sky backdrop ---- */
+  .veles-sky{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg,#aecdea 0%,#c6ddf1 34%,#ddebf7 66%,#eef5fb 100%);
   }
-  @keyframes veles-flow{
-    0%{background-position:0% 0%}
-    50%{background-position:100% 100%}
-    100%{background-position:0% 0%}
+  .veles-cloud{
+    position:absolute;border-radius:50%;pointer-events:none;
+    background:radial-gradient(closest-side,rgba(255,255,255,0.95),rgba(255,255,255,0));
+    filter:blur(26px);
   }
+  .veles-cloud.c1{width:56vw;height:24vh;left:-8vw;top:8vh;animation:veles-drift 80s ease-in-out infinite alternate}
+  .veles-cloud.c2{width:44vw;height:20vh;right:-6vw;top:22vh;opacity:.8;animation:veles-drift 95s ease-in-out infinite alternate-reverse}
+  .veles-cloud.c3{width:64vw;height:26vh;left:14vw;bottom:-4vh;opacity:.9;animation:veles-drift 110s ease-in-out infinite alternate}
+  .veles-cloud.c4{width:30vw;height:14vh;left:38vw;top:4vh;opacity:.65;animation:veles-drift 70s ease-in-out infinite alternate-reverse}
+  @keyframes veles-drift{from{transform:translateX(-3vw)}to{transform:translateX(3vw)}}
+
+  .v-fadeup{animation:vFadeUp .5s var(--ease-soft) both}
+  @keyframes vFadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .v-pop{animation:vPop .3s var(--ease-soft) both}
+  @keyframes vPop{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .v-dim{animation:vDim .25s var(--ease-soft) both}
+  @keyframes vDim{from{opacity:0}to{opacity:1}}
+  .v-modal{animation:vModal .4s var(--ease-soft) both}
+  @keyframes vModal{from{opacity:0;transform:translateY(12px) scale(.965)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+  /* ---- markdown in assistant replies ---- */
+  .v-md{font-size:15px;line-height:1.65;color:var(--ink-1);word-break:break-word}
+  .v-md>:first-child{margin-top:0}
+  .v-md>:last-child{margin-bottom:0}
+  .v-md p{margin:0 0 10px}
+  .v-md h1,.v-md h2,.v-md h3,.v-md h4{margin:18px 0 8px;letter-spacing:-0.015em;line-height:1.3;font-weight:640}
+  .v-md h1{font-size:19px}.v-md h2{font-size:17px}.v-md h3{font-size:15.5px}.v-md h4{font-size:15px}
+  .v-md ul,.v-md ol{margin:0 0 10px;padding-left:22px}
+  .v-md li{margin:3px 0}
+  .v-md li>p{margin:0}
+  .v-md strong{font-weight:620}
+  .v-md a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(55,118,224,0.30)}
+  .v-md code{font-family:var(--font-mono);font-size:12.5px;background:rgba(27,36,49,0.06);border:1px solid rgba(27,36,49,0.05);border-radius:5px;padding:1.5px 5px}
+  .v-md pre{background:rgba(27,36,49,0.05);border:1px solid rgba(27,36,49,0.06);border-radius:12px;padding:12px 14px;overflow-x:auto;margin:0 0 12px}
+  .v-md pre code{background:transparent;border:none;padding:0;font-size:12.5px;line-height:1.6}
+  .v-md blockquote{margin:0 0 10px;padding:2px 0 2px 12px;border-left:2.5px solid rgba(55,118,224,0.40);color:var(--ink-2)}
+  .v-md table{border-collapse:collapse;margin:4px 0 12px;font-size:13.5px;display:block;overflow-x:auto;max-width:100%}
+  .v-md th,.v-md td{border:1px solid rgba(27,36,49,0.10);padding:6.5px 11px;text-align:left;vertical-align:top}
+  .v-md th{background:rgba(27,36,49,0.045);font-weight:600;font-size:12.5px;white-space:nowrap}
+  .v-md tr:nth-child(even) td{background:rgba(27,36,49,0.02)}
+  .v-md hr{border:none;height:1px;background:var(--hair);margin:14px 0}
 </style>
 </head>
 <body>
@@ -58,20 +109,24 @@
 </script>
 <div id="root"></div>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/marked@12.0.2/marked.min.js" integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/dompurify@3.1.6/dist/purify.min.js" integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-<script src="../../_ds_bundle.js"></script>
-<script type="text/babel" src="Sidebar.jsx?v=2" data-presets="react"></script>
-<script type="text/babel" src="RightPanel.jsx?v=2" data-presets="react"></script>
-<script type="text/babel" src="ThinkingViz.jsx?v=2" data-presets="react"></script>
-<script type="text/babel" src="ChatScreen.jsx?v=2" data-presets="react"></script>
+<script type="text/babel" src="Sidebar.jsx?v=6" data-presets="react"></script>
+<script type="text/babel" src="ThinkingViz.jsx?v=6" data-presets="react"></script>
+<script type="text/babel" src="ChatScreen.jsx?v=6" data-presets="react"></script>
 <script type="text/babel" data-presets="react">
   function App(){
     React.useEffect(()=>{ if(window.lucide) window.lucide.createIcons(); },[]);
     return (
-      <div style={{position:'fixed',inset:0,background:'#08080a'}}>
-        <div aria-hidden="true" className="veles-mesh" style={{position:'absolute',inset:0}}></div>
+      <div style={{position:'fixed',inset:0}}>
+        <div aria-hidden="true" className="veles-sky"></div>
+        <div aria-hidden="true" className="veles-cloud c1"></div>
+        <div aria-hidden="true" className="veles-cloud c2"></div>
+        <div aria-hidden="true" className="veles-cloud c3"></div>
+        <div aria-hidden="true" className="veles-cloud c4"></div>
         <window.ChatScreenWrap/>
       </div>
     );

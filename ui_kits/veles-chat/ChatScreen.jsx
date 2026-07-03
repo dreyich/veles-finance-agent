@@ -1,91 +1,186 @@
 const { useState, useRef, useEffect } = React;
 
-function Composer({ onSend, thinking }) {
+// ---- persistent chats (real data, localStorage) ----
+const VELES_LS_KEY = "veles.chats.v2";
+function loadChats() {
+  try {
+    const v = JSON.parse(localStorage.getItem(VELES_LS_KEY) || "[]");
+    return Array.isArray(v) ? v.filter((c) => c && c.id && c.title) : [];
+  } catch { return []; }
+}
+function uid() {
+  return (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 5) return "Working late?";
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+function timeAgo(ts) {
+  const s = Math.max(1, Math.round((Date.now() - ts) / 1000));
+  if (s < 60) return "just now";
+  const m = Math.round(s / 60); if (m < 60) return `${m}m ago`;
+  const h = Math.round(m / 60); if (h < 24) return `${h}h ago`;
+  const d = Math.round(h / 24); if (d === 1) return "yesterday";
+  if (d < 7) return `${d}d ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
+function Composer({ onSend, onStop, thinking, empty }) {
   const [val, setVal] = useState("");
   const [focused, setFocused] = useState(false);
-  const send = () => { if (val.trim()) { onSend(val.trim()); setVal(""); } };
+  const mobile = window.useVelesMobile();
+  const taRef = useRef(null);
+  const send = () => { if (val.trim() && !thinking) { onSend(val.trim()); setVal(""); if (taRef.current) taRef.current.style.height = "auto"; } };
+  const autosize = (el) => { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 168) + "px"; };
   return (
-    <div style={{ position: "relative", padding: thinking ? "2px" : "1px", borderRadius: "26px",
+    <div style={{ position: "relative", padding: thinking ? 2 : 1.5, borderRadius: 23,
       background: thinking
-        ? "conic-gradient(from var(--rainbow-angle), rgba(255,255,255,0.10) 0deg, rgba(255,255,255,0.10) 210deg, #3da5ff 250deg, #8a4dff 285deg, #ff2d9b 315deg, #ff8a3d 345deg, rgba(255,255,255,0.10) 360deg)"
-        : (focused ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.10)"),
-      boxShadow: thinking ? "var(--shadow-island), 0 0 26px rgba(138,77,255,0.22)" : "var(--shadow-island)",
-      transition: "padding var(--dur-med) var(--ease-soft)" }}>
-      <div style={{ position: "relative", overflow: "hidden", background: thinking ? "rgba(14,14,20,0.86)" : "rgba(36,38,48,0.42)", backdropFilter: "blur(40px) saturate(200%) brightness(1.12)",
-        WebkitBackdropFilter: "blur(40px) saturate(200%) brightness(1.12)", borderRadius: "24px", padding: "16px 18px",
-        boxShadow: "inset 0 1.5px 0.5px rgba(255,255,255,0.45), inset 0 0 0 0.5px rgba(255,255,255,0.10), inset 0 -10px 22px rgba(0,0,0,0.35)" }}>
-        <div aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: "24px", pointerEvents: "none",
-          background: "linear-gradient(150deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 22%, rgba(255,255,255,0) 45%)" }} />
+        ? "conic-gradient(from var(--rainbow-angle), rgba(27,36,49,0.08) 0deg 205deg, #8ec5ff 245deg, #b9a7ff 288deg, #8ee7d2 330deg, rgba(27,36,49,0.08) 360deg)"
+        : (focused ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.6)"),
+      boxShadow: focused || thinking
+        ? "0 16px 44px rgba(31,54,84,0.20), 0 3px 10px rgba(31,54,84,0.10)"
+        : "0 12px 36px rgba(31,54,84,0.15), 0 2px 8px rgba(31,54,84,0.07)",
+      transition: "background .3s var(--ease-soft), box-shadow .35s var(--ease-soft), padding .3s var(--ease-soft)" }}>
+      <div style={{ position: "relative", overflow: "hidden", borderRadius: 21.5,
+        background: "rgba(255,255,255,0.82)", backdropFilter: "blur(30px) saturate(1.7)",
+        WebkitBackdropFilter: "blur(30px) saturate(1.7)", padding: "14px 15px 12px",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.95)" }}>
         <textarea
-          value={val} rows={1}
-          onChange={(e) => setVal(e.target.value)}
+          ref={taRef} value={val} rows={1}
+          onChange={(e) => { setVal(e.target.value); autosize(e.target); }}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="Ask follow up…"
-          style={{ width: "100%", border: "none", outline: "none", resize: "none", background: "transparent",
-            color: "var(--text-primary)", fontFamily: "var(--font-sans)", fontSize: "16px", lineHeight: 1.5 }} />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button style={pillBtn}>
-              <i data-lucide="paperclip" style={{ width: 16, height: 16 }}></i> Attach report
-            </button>
-            <button style={{ ...pillBtn, padding: 9, borderRadius: "999px" }} aria-label="Voice input">
-              <i data-lucide="mic" style={{ width: 16, height: 16 }}></i>
-            </button>
-          </div>
-          <button onClick={send} style={{ width: 44, height: 44, borderRadius: "999px", border: "none",
-            cursor: "pointer", background: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-            <i data-lucide={thinking ? "square" : "arrow-up"} style={{ width: 18, height: 18, color: "#0a0a0f" }}></i>
+          onKeyDown={(e) => {
+            if (e.key !== "Enter" || e.shiftKey) return;
+            const enterToSend = !window.velesSettings || window.velesSettings.enterToSend !== false;
+            if (enterToSend || e.ctrlKey || e.metaKey) { e.preventDefault(); send(); }
+          }}
+          placeholder={empty ? "Ask Veles anything…" : "Ask follow up…"}
+          style={{ width: "100%", boxSizing: "border-box", border: "none", outline: "none", resize: "none",
+            background: "transparent", color: "var(--ink-1)",
+            fontSize: mobile ? 16 : 15, lineHeight: 1.55,
+            padding: "2px 4px", minHeight: 24, maxHeight: 168 }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 11px 4px 5px",
+            borderRadius: 999, background: "rgba(27,36,49,0.05)", border: "1px solid rgba(27,36,49,0.06)",
+            color: "var(--ink-2)", fontSize: 12, fontWeight: 500 }}>
+            <span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0,
+              background: "linear-gradient(145deg,#2a3950,#151d2a)",
+              boxShadow: "0 1px 3px rgba(21,29,42,0.30), inset 0 1px 0 rgba(255,255,255,0.18)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              color: "#fff", fontWeight: 650, fontSize: 9.5 }}>V</span>
+            Veles · Financial analyst
+          </span>
+          <button onClick={thinking ? onStop : send}
+            aria-label={thinking ? "Stop generating" : "Send"} title={thinking ? "Stop generating" : "Send"}
+            style={{ width: 38, height: 38, borderRadius: 999, border: "none", cursor: "pointer",
+              background: thinking ? "rgba(27,36,49,0.72)" : "#1b2431",
+              boxShadow: "0 4px 12px rgba(21,29,42,0.30)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center",
+              transition: "transform .18s var(--ease-soft), background .25s" }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}>
+            <i data-lucide={thinking ? "square" : "arrow-up"}
+              style={{ width: thinking ? 13 : 17, height: thinking ? 13 : 17, color: "#fff",
+                fill: thinking ? "#fff" : "none" }}></i>
           </button>
         </div>
       </div>
     </div>
   );
 }
-const pillBtn = { display: "inline-flex", alignItems: "center", gap: "8px", padding: "9px 16px",
-  borderRadius: "999px", border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.05)",
-  color: "var(--text-secondary)", fontFamily: "var(--font-sans)", fontSize: "14px", cursor: "pointer" };
 
-function Bubble({ role, children }) {
-  const { Avatar, Card } = window.VelesDesignSystem_1bfbc8;
-  const ai = role === "ai";
-  const text = (
-    <div style={{ fontSize: "15px", lineHeight: 1.6, color: "var(--text-primary)", fontFamily: ai ? "'Inter', sans-serif" : "var(--font-sans)", letterSpacing: ai ? "-0.011em" : "normal" }}>{children}</div>
-  );
-  if (ai) {
+function mdToHtml(text) {
+  try {
+    if (window.marked && window.DOMPurify) {
+      const raw = window.marked.parse(text, { gfm: true, breaks: true });
+      return window.DOMPurify.sanitize(raw);
+    }
+  } catch {}
+  return null;
+}
+
+function copyText(text) {
+  const legacy = () => new Promise((resolve, reject) => {
+    const ta = document.createElement("textarea");
+    ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy") ? resolve() : reject(new Error("copy blocked")); }
+    catch (e) { reject(e); }
+    finally { document.body.removeChild(ta); }
+  });
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).catch(legacy);
+  }
+  return legacy();
+}
+
+function Bubble({ role, text }) {
+  const [hov, setHov] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const mobile = window.useVelesMobile();
+  useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+
+  if (role === "user") {
     return (
-      <div style={{ maxWidth: "84%" }}>{text}</div>
+      <div className="v-fadeup" style={{ display: "flex", justifyContent: "flex-end" }}>
+        <div style={{ maxWidth: mobile ? "88%" : "76%", padding: "10px 15px", borderRadius: "17px 17px 5px 17px",
+          background: "rgba(27,36,49,0.065)", border: "1px solid rgba(27,36,49,0.05)",
+          fontSize: 15, lineHeight: 1.6, color: "var(--ink-1)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {text}
+        </div>
+      </div>
     );
   }
+  const error = role === "error";
+  const html = !error ? mdToHtml(text) : null;
+  const copy = () => {
+    copyText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    }).catch(() => {});
+  };
   return (
-    <div style={{ display: "flex", gap: "14px", alignItems: "flex-start", flexDirection: "row-reverse" }}>
-      <Avatar label="JD" size={34} />
-      <div style={{ maxWidth: "76%" }}>
-        <Card padding="14px 18px"
-          style={{ borderRadius: "20px 6px 20px 20px", background: "rgba(255,255,255,0.09)" }}>
-          {text}
-        </Card>
+    <div className="v-fadeup" style={{ display: "flex", gap: 12, alignItems: "flex-start" }}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}>
+      <span aria-hidden="true" style={{ width: 26, height: 26, borderRadius: 8.5, flexShrink: 0, marginTop: 2,
+        background: error ? "rgba(194,69,60,0.10)" : "linear-gradient(145deg,#2a3950,#151d2a)",
+        border: error ? "1px solid rgba(194,69,60,0.25)" : "none", boxSizing: "border-box",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        color: error ? "#c2453c" : "#fff", fontWeight: 650, fontSize: 12 }}>
+        {error ? <i data-lucide="triangle-alert" style={{ width: 13, height: 13 }}></i> : "V"}
+      </span>
+      <div style={{ maxWidth: mobile ? "100%" : "86%", minWidth: 0, flex: mobile ? 1 : "none", paddingTop: 3 }}>
+        {html ? (
+          <div className="v-md" dangerouslySetInnerHTML={{ __html: html }} />
+        ) : (
+          <div style={{ fontSize: 15, lineHeight: 1.65, color: error ? "#a03f37" : "var(--ink-1)",
+            whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{text}</div>
+        )}
+        {!error && (
+          <div style={{ height: 26, marginTop: 4, display: "flex", alignItems: "center",
+            opacity: hov || copied || mobile ? 1 : 0, transition: "opacity .2s var(--ease-soft)" }}>
+            <button onClick={copy} aria-label="Copy response"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4.5px 10px",
+                borderRadius: 8, border: "1px solid rgba(27,36,49,0.08)", cursor: "pointer",
+                fontSize: 11.5, fontWeight: 550, color: copied ? "#2a7d4f" : "var(--ink-2)",
+                background: copied ? "rgba(42,125,79,0.08)" : "rgba(255,255,255,0.6)",
+                boxShadow: "0 1px 2px rgba(31,54,84,0.05)",
+                transition: "background .2s, color .2s" }}>
+              <i data-lucide={copied ? "check" : "copy"} style={{ width: 12, height: 12 }}></i>
+              {copied ? "Copied" : "Copy"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function Thinking() {
-  return (
-    <div style={{ display: "flex", alignItems: "center" }}>
-      <span style={{ display: "inline-flex", gap: "5px", alignItems: "center" }}>
-        {[0, 1, 2].map((i) => (
-          <span key={i} style={{ width: 7, height: 7, borderRadius: "50%", background: "#fff",
-            opacity: 0.85, animation: `veles-pulse 1.2s ${i * 0.18}s ease-in-out infinite` }} />
-        ))}
-        <span style={{ marginLeft: 8, color: "var(--text-tertiary)", fontSize: 13 }}>Analyzing…</span>
-      </span>
-      <style>{`@keyframes veles-pulse{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}`}</style>
-    </div>
-  );
-}
-
-async function askVeles(message, history) {
+async function askVeles(message, history, signal) {
   if (window.VELES_CONFIG_READY) await window.VELES_CONFIG_READY;
   const gatewayUrl = window.VELES_GATEWAY_URL || "http://localhost:8080";
   const webSecret = window.VELES_WEB_SECRET || "";
@@ -93,6 +188,7 @@ async function askVeles(message, history) {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-web-secret": webSecret },
     body: JSON.stringify({ message, history }),
+    signal,
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
@@ -104,93 +200,259 @@ async function askVeles(message, history) {
   return data.response ?? JSON.stringify(data);
 }
 
-const STARTER = [];
+function HeaderBtn({ icon, label, onClick, danger }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <button aria-label={label} title={label} onClick={onClick}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ width: 32, height: 32, borderRadius: 9, border: "none", cursor: "pointer",
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        color: danger && hov ? "#c2453c" : hov ? "var(--ink-1)" : "var(--ink-2)",
+        background: hov ? (danger ? "rgba(194,69,60,0.09)" : "rgba(27,36,49,0.06)") : "transparent",
+        transition: "background .2s var(--ease-soft), color .2s" }}>
+      <i data-lucide={icon} style={{ width: 15.5, height: 15.5 }}></i>
+    </button>
+  );
+}
 
 function ChatScreen() {
-  const { Badge } = window.VelesDesignSystem_1bfbc8;
-  const [msgs, setMsgs] = useState(STARTER);
-  const [thinking, setThinking] = useState(false);
+  const [chats, setChats] = useState(loadChats);
+  const [activeId, setActiveId] = useState(null);
+  const [thinkingId, setThinkingId] = useState(null);
   const [thinkType, setThinkType] = useState("diligence");
-  const [title, setTitle] = useState("New chat");
-  const [sbOpen, setSbOpen] = useState(true);
-  const [rpOpen, setRpOpen] = useState(true);
+  const mobile = window.useVelesMobile();
+  const [sbOpen, setSbOpen] = useState(() => !window.velesIsMobile());
+  const [confirmDel, setConfirmDel] = useState(false);
   const scrollRef = useRef(null);
+  const abortRef = useRef(null);
+
+  useEffect(() => { setSbOpen(!mobile); }, [mobile]);
+
+  const active = chats.find((c) => c.id === activeId) || null;
+  const msgs = active ? active.msgs : [];
+  const thinkingHere = thinkingId !== null && thinkingId === activeId;
+  const empty = msgs.length === 0 && !thinkingHere;
+
+  const [, setSetTick] = useState(0);
+  useEffect(() => {
+    const onSet = () => setSetTick((n) => n + 1);
+    window.addEventListener("veles-settings", onSet);
+    return () => window.removeEventListener("veles-settings", onSet);
+  }, []);
 
   useEffect(() => { if (window.lucide) window.lucide.createIcons(); });
+  useEffect(() => { try { localStorage.setItem(VELES_LS_KEY, JSON.stringify(chats)); } catch {} }, [chats]);
+  useEffect(() => { setConfirmDel(false); }, [activeId]);
   useEffect(() => {
     const sc = scrollRef.current;
     if (!sc) return;
     sc.scrollTop = sc.scrollHeight;
     const t = setTimeout(() => { sc.scrollTop = sc.scrollHeight; }, 120);
     return () => clearTimeout(t);
-  }, [msgs, thinking, thinkType]);
+  }, [msgs.length, thinkingId, thinkType, activeId]);
+
+  const appendMsg = (id, m) =>
+    setChats((cs) => cs.map((c) => c.id === id ? { ...c, msgs: [...c.msgs, m], ts: Date.now() } : c));
 
   const send = async (text) => {
-    const history = msgs.map((m) => ({ role: m.role === "ai" ? "assistant" : "user", content: m.text }));
-    setMsgs((m) => [...m, { role: "user", text }]);
+    let id = activeId;
+    const history = msgs.map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
+    if (!id) {
+      id = uid();
+      const title = text.length > 58 ? text.slice(0, 58).trimEnd() + "…" : text;
+      setChats((cs) => [{ id, title, msgs: [], ts: Date.now() }, ...cs]);
+      setActiveId(id);
+    }
+    appendMsg(id, { role: "user", text });
     setThinkType(window.velesDetectType ? window.velesDetectType(text) : "diligence");
-    setThinking(true);
+    setThinkingId(id);
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
     try {
-      const reply = await askVeles(text, history);
-      setMsgs((m) => [...m, { role: "ai", text: reply }]);
+      const reply = await askVeles(text, history, ctrl.signal);
+      appendMsg(id, { role: "ai", text: reply });
     } catch (err) {
-      setMsgs((m) => [...m, { role: "ai", text: `Something went wrong: ${err.message}` }]);
+      if (err.name !== "AbortError") {
+        appendMsg(id, { role: "error", text: `Something went wrong: ${err.message}` });
+      }
     } finally {
-      setThinking(false);
+      if (abortRef.current === ctrl) abortRef.current = null;
+      setThinkingId((cur) => (cur === id ? null : cur));
     }
   };
 
-  const select = (t) => {
-    if (t === "__new") { setMsgs([]); setTitle("New chat"); }
-    else setTitle(t);
-  };
+  const stop = () => { if (abortRef.current) abortRef.current.abort(); };
 
-  const iconBtn = { width: 38, height: 38, borderRadius: "50%", cursor: "pointer",
-    display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)",
-    background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)" };
+  const deleteChat = (id) => {
+    setChats((cs) => cs.filter((c) => c.id !== id));
+    if (activeId === id) setActiveId(null);
+  };
+  const renameChat = (id, title) =>
+    setChats((cs) => cs.map((c) => c.id === id ? { ...c, title } : c));
+
+  const showRecents = !window.velesSettings || window.velesSettings.showRecents !== false;
+  const recents = showRecents ? chats.slice(0, 3) : [];
+
+  const sidebar = (
+    <window.VelesSidebar
+      chats={chats} activeId={activeId}
+      onSelect={(id) => { setActiveId(id); if (mobile) setSbOpen(false); }}
+      onNew={() => { setActiveId(null); if (mobile) setSbOpen(false); }}
+      onDelete={deleteChat}
+      onRename={renameChat}
+      onClearAll={() => { setChats([]); setActiveId(null); }} />
+  );
 
   return (
-    <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex" }}>
-      {sbOpen && <window.VelesSidebar active={title} onSelect={select} />}
+    <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex",
+      padding: mobile ? 8 : 10, boxSizing: "border-box" }}>
 
-      <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", height: "100%" }}>
-        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "16px 28px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <button style={iconBtn} aria-label="Toggle chats" onClick={() => setSbOpen((v) => !v)}>
-              <i data-lucide={sbOpen ? "panel-left-close" : "panel-left-open"} style={{ width: 16, height: 16 }}></i>
-            </button>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden",
-                textOverflow: "ellipsis" }}>{title}</div>
-              <div style={{ fontSize: 12, color: "var(--text-tertiary)" }}>Financial analyst · Due diligence</div>
-            </div>
+      {mobile ? (
+        <>
+          {/* mobile: sidebar slides over the chat */}
+          <div onClick={() => setSbOpen(false)} aria-hidden={!sbOpen}
+            style={{ position: "fixed", inset: 0, zIndex: 40,
+              background: "rgba(27,36,49,0.30)", backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+              opacity: sbOpen ? 1 : 0, pointerEvents: sbOpen ? "auto" : "none",
+              transition: "opacity .35s var(--ease-soft)" }} />
+          <div style={{ position: "fixed", top: 8, bottom: 8, left: 8,
+            width: "min(300px, 84vw)", zIndex: 41,
+            transform: sbOpen ? "translateX(0)" : "translateX(calc(-100% - 16px))",
+            transition: "transform .45s var(--ease-soft)",
+            pointerEvents: sbOpen ? "auto" : "none" }}>
+            {sidebar}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Badge tone="neutral">Pro</Badge>
-            <button style={iconBtn} aria-label="Share"><i data-lucide="share-2" style={{ width: 16, height: 16 }}></i></button>
-            <button style={iconBtn} aria-label="Model settings"><i data-lucide="sliders-horizontal" style={{ width: 16, height: 16 }}></i></button>
-            <button style={iconBtn} aria-label="Toggle analysis panel" onClick={() => setRpOpen((v) => !v)}>
-              <i data-lucide={rpOpen ? "panel-right-close" : "panel-right-open"} style={{ width: 16, height: 16 }}></i>
-            </button>
-          </div>
-        </header>
-
-        <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column",
-          maxWidth: 760, margin: "0 auto", width: "100%", padding: "0 24px", boxSizing: "border-box" }}>
-          <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column",
-            gap: 18, padding: "24px 0 20px" }}>
-            {msgs.map((m, i) => <Bubble key={i} role={m.role === "ai" ? "ai" : "user"}>{m.text}</Bubble>)}
-            {thinking && <window.VelesThinking type={thinkType} />}
-          </div>
-          <div style={{ paddingBottom: 24 }}>
-            <Composer onSend={send} thinking={thinking} />
+        </>
+      ) : (
+        /* desktop: sidebar pushes content (animated width) */
+        <div style={{ width: sbOpen ? 274 : 0, flexShrink: 0, height: "100%", overflow: "hidden",
+          transition: "width .5s var(--ease-soft)" }}>
+          <div style={{ width: 274, height: "100%", boxSizing: "border-box", paddingRight: 10,
+            opacity: sbOpen ? 1 : 0, transform: sbOpen ? "translateX(0)" : "translateX(-16px)",
+            transition: "opacity .4s var(--ease-soft), transform .5s var(--ease-soft)" }}>
+            {sidebar}
           </div>
         </div>
-      </main>
+      )}
 
-      {rpOpen && <window.VelesRightPanel />}
+      {/* main glass panel */}
+      <main style={{ flex: 1, minWidth: 0, position: "relative", height: "100%", boxSizing: "border-box",
+        borderRadius: 18, overflow: "hidden",
+        background: "var(--panel)", backdropFilter: "blur(44px) saturate(1.7)",
+        WebkitBackdropFilter: "blur(44px) saturate(1.7)",
+        border: "1px solid rgba(255,255,255,0.65)",
+        boxShadow: "0 18px 50px rgba(31,54,84,0.14), inset 0 1px 0 rgba(255,255,255,0.85)" }}>
+
+        {/* header */}
+        <header style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 5,
+          display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", boxSizing: "border-box" }}>
+          <HeaderBtn icon={sbOpen ? "panel-left-close" : "panel-left-open"} label="Toggle sidebar"
+            onClick={() => setSbOpen((v) => !v)} />
+          <div style={{ minWidth: 0, flex: 1, fontSize: 13.5, fontWeight: 600, letterSpacing: "-0.012em",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            opacity: empty ? 0 : 1, transition: "opacity .3s var(--ease-soft)" }}>
+            {active ? active.title : "New chat"}
+          </div>
+          {active && (
+            confirmDel ? (
+              <button onClick={() => deleteChat(active.id)} className="v-pop"
+                style={{ border: "none", cursor: "pointer", borderRadius: 9, padding: "6.5px 12px",
+                  background: "rgba(194,69,60,0.10)", color: "#c2453c", fontSize: 12.5, fontWeight: 550 }}>
+                Delete chat?
+              </button>
+            ) : (
+              <HeaderBtn icon="trash-2" label="Delete chat" danger onClick={() => setConfirmDel(true)} />
+            )
+          )}
+        </header>
+
+        {/* messages */}
+        <div ref={scrollRef} style={{ position: "absolute", inset: "54px 0 0 0", overflowY: "auto",
+          opacity: empty ? 0 : 1, transition: "opacity .35s var(--ease-soft)",
+          pointerEvents: empty ? "none" : "auto" }}>
+          <div style={{ maxWidth: 720, margin: "0 auto", boxSizing: "border-box",
+            padding: mobile ? "12px 14px 150px" : "14px 26px 170px",
+            display: "flex", flexDirection: "column", gap: mobile ? 16 : 20 }}>
+            {msgs.map((m, i) => <Bubble key={i} role={m.role} text={m.text} />)}
+            {thinkingHere && <window.VelesThinking type={thinkType} />}
+          </div>
+        </div>
+
+        {/* empty-state hero */}
+        <div aria-hidden={!empty} style={{ position: "absolute", left: 0, right: 0,
+          bottom: "calc(46% + 118px)", display: "flex", flexDirection: "column",
+          alignItems: "center", gap: 10, padding: "0 24px", textAlign: "center",
+          opacity: empty ? 1 : 0, transform: empty ? "translateY(0)" : "translateY(-16px)",
+          transition: "opacity .4s var(--ease-soft), transform .5s var(--ease-soft)",
+          pointerEvents: "none" }}>
+          <span style={{ width: 44, height: 44, borderRadius: 13,
+            background: "linear-gradient(145deg,#2a3950,#151d2a)",
+            boxShadow: "0 8px 22px rgba(21,29,42,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            color: "#fff", fontWeight: 650, fontSize: 19, marginBottom: 6 }}>V</span>
+          <div style={{ fontSize: mobile ? 22 : 26, fontWeight: 650, letterSpacing: "-0.022em", color: "var(--ink-1)" }}>
+            {greeting()}
+          </div>
+          <div style={{ fontSize: mobile ? 13 : 14, color: "var(--ink-2)", maxWidth: 420, lineHeight: 1.5 }}>
+            Ask about filings, valuations or risk — Veles reads the documents for you.
+          </div>
+        </div>
+
+        {/* composer (docks center → bottom) */}
+        <div style={{ position: "absolute", left: 0, right: 0,
+          bottom: empty ? "calc(46% + 0px)" : (mobile ? "calc(0% + 12px)" : "calc(0% + 18px)"),
+          transition: "bottom .6s var(--ease-soft)",
+          display: "flex", justifyContent: "center", padding: mobile ? "0 12px" : "0 24px", zIndex: 6 }}>
+          <div style={{ width: "100%", maxWidth: empty ? 620 : 720,
+            transition: "max-width .6s var(--ease-soft)" }}>
+            <Composer onSend={send} onStop={stop} thinking={thinkingId !== null} empty={empty} />
+          </div>
+        </div>
+
+        {/* recent chats (empty state only, real data) */}
+        {recents.length > 0 && (
+          <div style={{ position: "absolute", left: 0, right: 0, top: "calc(54% + 78px)",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 12,
+            padding: "0 24px",
+            opacity: empty ? 1 : 0, transform: empty ? "translateY(0)" : "translateY(16px)",
+            transition: "opacity .4s var(--ease-soft), transform .5s var(--ease-soft)",
+            pointerEvents: empty ? "auto" : "none" }}>
+            <div style={{ fontSize: 11, fontWeight: 550, letterSpacing: "0.07em",
+              textTransform: "uppercase", color: "var(--ink-3)" }}>Recent chats</div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap",
+              maxWidth: 620, width: "100%" }}>
+              {recents.map((c) => (
+                <RecentCard key={c.id} chat={c} onOpen={() => setActiveId(c.id)} />
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
+
+function RecentCard({ chat, onOpen }) {
+  const [hov, setHov] = useState(false);
+  const last = chat.msgs[chat.msgs.length - 1];
+  return (
+    <button onClick={onOpen}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{ flex: "1 1 170px", maxWidth: 200, textAlign: "left", cursor: "pointer",
+        padding: "12px 13px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.7)",
+        background: hov ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.55)",
+        boxShadow: hov ? "0 10px 26px rgba(31,54,84,0.14)" : "0 4px 14px rgba(31,54,84,0.07)",
+        transform: hov ? "translateY(-2px)" : "translateY(0)",
+        transition: "all .25s var(--ease-soft)" }}>
+      <div style={{ fontSize: 12.5, fontWeight: 550, color: "var(--ink-1)", lineHeight: 1.4,
+        display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
+        overflow: "hidden", marginBottom: 6 }}>{chat.title}</div>
+      <div style={{ fontSize: 11, color: "var(--ink-3)" }}>
+        {timeAgo(chat.ts)}{last ? ` · ${chat.msgs.length} messages` : ""}
+      </div>
+    </button>
+  );
+}
+
 window.ChatScreenWrap = ChatScreen;

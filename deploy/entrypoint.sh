@@ -13,7 +13,7 @@ from huggingface_hub import snapshot_download
 snapshot_download(
     repo_id='${HF_REPO}',
     local_dir='${MODEL_PATH}',
-    token='${HUGGINGFACE_TOKEN:-}',
+    token='${HF_TOKEN:-}',
     ignore_patterns=['*.md','*.txt'],
 )
 "

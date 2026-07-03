@@ -1,6 +1,6 @@
 fastapi==0.115.6
 uvicorn==0.34.0
-openai==1.59.3
+openai>=1.66.0
 httpx==0.28.1
 yfinance==0.2.51
 langchain-core>=0.3.30,<0.4.0

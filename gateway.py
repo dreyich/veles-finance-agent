@@ -160,15 +160,18 @@ async def x402_middleware(request: Request, call_next):
 _HEADERS = lambda: {"Authorization": f"Bearer {RUNPOD_API_KEY}"}
 
 
+_COLD_START_TIMEOUT = httpx.Timeout(280.0, connect=15.0)
+
+
 async def _proxy_body(path: str, body: dict) -> dict:
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=_COLD_START_TIMEOUT) as client:
         r = await client.post(f"{RUNPOD_URL}{path}", json=body, headers=_HEADERS())
         r.raise_for_status()
         return r.json()
 
 
 async def _proxy_params(path: str, params: dict) -> dict:
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=_COLD_START_TIMEOUT) as client:
         r = await client.post(f"{RUNPOD_URL}{path}", params=params, headers=_HEADERS())
         r.raise_for_status()
         return r.json()

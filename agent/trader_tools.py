@@ -251,6 +251,9 @@ def get_earnings_calendar(ticker: str) -> str:
                     next_date = cal_dict.get("Earnings Date", [None])[0] if cal_dict.get("Earnings Date") else None
                 elif isinstance(cal, dict):
                     next_date = cal.get("Earnings Date")
+                # yfinance sometimes nests this in an extra list — unwrap it
+                if isinstance(next_date, list):
+                    next_date = next_date[0] if next_date else None
         except Exception:
             pass
 

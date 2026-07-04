@@ -197,7 +197,7 @@ async function askVeles(message, history, signal) {
       : `Request failed (${res.status}). ${detail}`);
   }
   const data = await res.json();
-  return data.response ?? JSON.stringify(data);
+  return data.answer ?? data.response ?? JSON.stringify(data);
 }
 
 function HeaderBtn({ icon, label, onClick, danger }) {

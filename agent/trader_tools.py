@@ -7,6 +7,7 @@ New tools — no model changes required:
   - screen_stocks          : Filter stocks by sector, P/E, beta, margin
 """
 from __future__ import annotations
+import time
 import httpx
 import yfinance as yf
 from datetime import date as _date
@@ -14,6 +15,19 @@ from langchain_core.tools import tool
 from .sec_tool import _get_cik, HEADERS
 
 _BASE = "https://data.sec.gov"
+
+
+def yf_with_retry(fn, retries: int = 3, base_delay: float = 1.5):
+    """Run a yfinance call with exponential backoff on transient errors (Yahoo 429 rate limits)."""
+    last_exc = None
+    for attempt in range(retries):
+        try:
+            return fn()
+        except Exception as exc:
+            last_exc = exc
+            if attempt < retries - 1:
+                time.sleep(base_delay * (2 ** attempt))
+    raise last_exc
 
 
 def _fmt_m(v: float | None) -> str:
@@ -218,7 +232,7 @@ def get_earnings_calendar(ticker: str) -> str:
     ticker = ticker.strip().upper()
     try:
         t = yf.Ticker(ticker)
-        info = t.info or {}
+        info = yf_with_retry(lambda: t.info) or {}
         company = info.get("longName") or info.get("shortName") or ticker
 
         lines = [
@@ -329,7 +343,7 @@ def screen_stocks(
 
     for ticker in tickers:
         try:
-            info = yf.Ticker(ticker).info or {}
+            info = yf_with_retry(lambda t=ticker: yf.Ticker(t).info) or {}
             pe = info.get("trailingPE")
             beta = info.get("beta")
             margin = info.get("profitMargins")

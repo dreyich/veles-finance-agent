@@ -3,7 +3,7 @@ from datetime import datetime
 import yfinance as yf
 from langchain_core.tools import tool
 from .sec_tool import fetch_sec_10k_tool
-from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_stocks
+from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_stocks, yf_with_retry
 
 _MARKET_CAP_LABELS = [(1_000_000_000_000, "T"), (1_000_000_000, "B"), (1_000_000, "M")]
 
@@ -24,8 +24,8 @@ def get_market_data(ticker: str) -> str:
     ticker = ticker.strip().upper()
     try:
         t = yf.Ticker(ticker)
-        info = t.info or {}
-        news = t.news or []
+        info = yf_with_retry(lambda: t.info) or {}
+        news = yf_with_retry(lambda: t.news) or []
     except Exception as exc:
         return f"Error fetching data for {ticker}: {exc}"
 
@@ -94,7 +94,7 @@ def due_diligence_report(ticker: str, risk_profile: str) -> str:
 
     try:
         t = yf.Ticker(ticker)
-        info = t.info or {}
+        info = yf_with_retry(lambda: t.info) or {}
     except Exception as exc:
         return f"Error fetching data for {ticker}: {exc}"
 

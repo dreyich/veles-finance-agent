@@ -371,7 +371,7 @@ def _extract_qualitative(text: str) -> dict:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=200,
                 temperature=0,
-                response_format={"type": "json_schema", "json_schema": {"schema": _QUALITATIVE_SCHEMA}},
+                response_format={"type": "json_schema", "json_schema": {"name": "qualitative_analysis", "schema": _QUALITATIVE_SCHEMA}},
             )
             return json.loads(resp.choices[0].message.content or "{}")
         else:

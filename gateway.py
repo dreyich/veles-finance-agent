@@ -2,6 +2,8 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import time
+from collections import defaultdict
 import httpx
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
@@ -25,6 +27,32 @@ WALLET = os.getenv("PAY_TO_ADDRESS", "0xB686091302926c03D44d37C02A4183601F1F56B2
 # anyone who extracts this from browser JS can call /web/agent for free, so
 # treat this route as provisional and add real per-user auth before public launch.
 WEB_SHARED_SECRET = os.getenv("WEB_SHARED_SECRET", "")
+
+# Per-IP rate limit for /web/agent, since the shared secret above is
+# extractable from browser JS. This doesn't replace real per-user auth (a
+# leaked secret still works from any IP), but it bounds how much a leaked
+# secret can be abused before someone notices — in-memory, per-machine, so
+# it resets on redeploy/restart, which is an acceptable tradeoff for a
+# provisional route rather than pulling in Redis for this.
+_WEB_AGENT_RATE_LIMIT = 30
+_WEB_AGENT_RATE_WINDOW_SEC = 3600
+_web_agent_calls: dict[str, list[float]] = defaultdict(list)
+
+
+def _web_agent_rate_limited(client_ip: str) -> bool:
+    now = time.time()
+    calls = _web_agent_calls[client_ip]
+    calls[:] = [t for t in calls if now - t < _WEB_AGENT_RATE_WINDOW_SEC]
+    if len(calls) >= _WEB_AGENT_RATE_LIMIT:
+        return True
+    calls.append(now)
+    return False
+
+
+def _client_ip(request: Request) -> str:
+    # Fly.io sets Fly-Client-IP with the real caller; request.client.host
+    # would otherwise be Fly's internal proxy.
+    return request.headers.get("fly-client-ip") or (request.client.host if request.client else "unknown")
 
 # Defaults to x402.org's free testnet-only facilitator (Base Sepolia, no API key).
 # For production (Base mainnet, eip155:8453), two options:
@@ -251,6 +279,8 @@ async def kelly(request: Request):
 async def web_agent(request: Request):
     if not WEB_SHARED_SECRET or request.headers.get("x-web-secret") != WEB_SHARED_SECRET:
         raise HTTPException(status_code=401, detail="unauthorized")
+    if _web_agent_rate_limited(_client_ip(request)):
+        raise HTTPException(status_code=429, detail="rate limit exceeded — try again later")
     return await _proxy_body("/agent", await request.json())
 
 

@@ -99,7 +99,34 @@ def should_continue(state: AgentState) -> str:
     return END
 
 
-tool_node = ToolNode(TOOLS)
+# Every tool in TOOLS reports failure by returning a plain string starting
+# with one of these markers (never raises — @tool wrappers catch their own
+# exceptions), rather than a structured error type. Without this check, a
+# failed live call (rate limit, missing ticker, bad sector) flows into the
+# orchestrator's context looking identical to a successful report, and
+# nothing stops the LLM from citing it as real data.
+_TOOL_FAILURE_PREFIXES = (
+    "Error fetching",
+    "SEC EDGAR Error",
+    "10-K fetched",  # "...but extraction failed: ..."
+    "Cannot find SEC data",
+    "No XBRL data available",
+    "Unknown sector",
+)
+
+_raw_tool_node = ToolNode(TOOLS)
+
+
+def tool_node(state: AgentState) -> dict:
+    result = _raw_tool_node.invoke(state)
+    for msg in result.get("messages", []):
+        content = getattr(msg, "content", None)
+        if isinstance(content, str) and content.startswith(_TOOL_FAILURE_PREFIXES):
+            msg.content = (
+                "[TOOL CALL FAILED — this is not real data, do not present it "
+                f"as such; tell the user the lookup failed] {content}"
+            )
+    return result
 
 _builder = StateGraph(AgentState)
 _builder.add_node("agent", agent_node)

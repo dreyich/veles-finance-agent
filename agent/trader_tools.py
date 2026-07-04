@@ -8,6 +8,7 @@ New tools — no model changes required:
 """
 from __future__ import annotations
 import time
+from concurrent.futures import ThreadPoolExecutor
 import httpx
 import yfinance as yf
 from datetime import date as _date
@@ -339,9 +340,7 @@ def screen_stocks(
         available = ", ".join(_SECTOR_TICKERS.keys())
         return f"Unknown sector '{sector}'. Available: {available}"
 
-    passed, rejected_reasons = [], []
-
-    for ticker in tickers:
+    def _fetch(ticker: str) -> dict | None:
         try:
             info = yf_with_retry(lambda t=ticker: yf.Ticker(t).info) or {}
             pe = info.get("trailingPE")
@@ -350,24 +349,21 @@ def screen_stocks(
             price = info.get("currentPrice") or info.get("regularMarketPrice")
             name = (info.get("shortName") or ticker)[:20]
             target = info.get("targetMeanPrice")
-            rev = info.get("totalRevenue")
-            cap = info.get("marketCap")
 
-            # Filters
             if margin is not None and margin < 0:
-                continue
+                return None
             if pe is not None and pe > max_pe:
-                continue
+                return None
             if beta is not None and beta > max_beta:
-                continue
+                return None
             if margin is not None and margin * 100 < min_margin_pct:
-                continue
+                return None
 
             upside = None
             if target and price:
                 upside = (target / price - 1) * 100
 
-            passed.append({
+            return {
                 "ticker": ticker,
                 "name": name,
                 "price": price,
@@ -375,9 +371,16 @@ def screen_stocks(
                 "beta": beta,
                 "margin": margin * 100 if margin is not None else None,
                 "upside": upside,
-            })
+            }
         except Exception:
-            continue
+            return None
+
+    # Fetch all tickers concurrently — sequential fetches with per-ticker
+    # retry/backoff could take 100+ seconds for a 10-ticker sector, exceeding
+    # the frontend/proxy timeout before the response ever comes back.
+    with ThreadPoolExecutor(max_workers=len(tickers)) as pool:
+        results = list(pool.map(_fetch, tickers))
+    passed = [r for r in results if r is not None]
 
     if not passed:
         return (

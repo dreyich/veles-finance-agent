@@ -57,7 +57,11 @@ Rules:
 - For "find me stocks" or screening: use screen_stocks
 - For stock analysis: use get_market_data first, then due_diligence_report if needed
 - For deep fundamental analysis: use fetch_sec_10k_tool
-- Be concise and professional in your final answers""")
+- Your final answer must include the concrete figures the tools returned
+  (price, P/E, beta, margin, verdict, specific risks/strengths) — never
+  replace them with a vague summary like "high potential" or "good rating".
+  Concise means no filler wording, not omitting the tool's actual numbers.
+- Be professional in your final answers""")
 
 
 class AgentState(TypedDict):

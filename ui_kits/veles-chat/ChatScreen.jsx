@@ -228,6 +228,17 @@ function ChatScreen() {
 
   useEffect(() => { setSbOpen(!mobile); }, [mobile]);
 
+  // Pre-warm the RunPod backend on page load, before the user has typed
+  // anything — a cold worker takes ~2 minutes, so firing this now instead of
+  // on first send hides most of that behind normal page-load/typing time.
+  useEffect(() => {
+    (async () => {
+      if (window.VELES_CONFIG_READY) await window.VELES_CONFIG_READY;
+      const gatewayUrl = window.VELES_GATEWAY_URL || "http://localhost:8080";
+      fetch(`${gatewayUrl}/warm`, { method: "POST" }).catch(() => {});
+    })();
+  }, []);
+
   const active = chats.find((c) => c.id === activeId) || null;
   const msgs = active ? active.msgs : [];
   const thinkingHere = thinkingId !== null && thinkingId === activeId;

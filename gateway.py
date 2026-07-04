@@ -184,6 +184,19 @@ def health():
     return {"status": "ok", "backend": RUNPOD_URL}
 
 
+@gateway.post("/warm")
+async def warm():
+    """Pre-warming ping — called by the frontend on page load so the RunPod
+    worker (and model) is already spinning up by the time the user sends
+    their first message. Fire-and-forget: never surfaces an error to the
+    caller, since a cold RunPod worker legitimately takes ~2 minutes here."""
+    try:
+        await _proxy_body("/warm", {})
+    except Exception:
+        pass
+    return {"status": "ok"}
+
+
 @gateway.get("/ping")
 def ping():
     return "OK"

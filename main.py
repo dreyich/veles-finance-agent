@@ -19,6 +19,10 @@ from pydantic import BaseModel, Field
 from agent.graph import graph as langgraph_agent
 from agent.sec_tool import fetch_sec_10k, format_sec_report
 
+if os.getenv("SENTRY_DSN"):
+    import sentry_sdk
+    sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("SENTRY_ENVIRONMENT", "production"))
+
 # ── App & client ──────────────────────────────────────────────────────────────
 
 api = FastAPI(title="Veles Finance Agent", version="2.4.0")

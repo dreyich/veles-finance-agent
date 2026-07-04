@@ -16,6 +16,10 @@ from x402.http.middleware.fastapi import payment_middleware
 from x402.mechanisms.evm.exact import ExactEvmServerScheme
 from x402.extensions.bazaar import declare_discovery_extension, bazaar_resource_server_extension, OutputConfig
 
+if os.getenv("SENTRY_DSN"):
+    import sentry_sdk
+    sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("SENTRY_ENVIRONMENT", "production"))
+
 _STATIC = pathlib.Path(__file__).parent / "static"
 
 RUNPOD_URL = os.getenv("RUNPOD_ENDPOINT_URL", "https://n3g2m4yio8un96.api.runpod.ai")

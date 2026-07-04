@@ -9,6 +9,7 @@ langgraph==0.2.62
 pydantic==2.10.4
 typing-extensions==4.12.2
 x402[fastapi,evm,extensions]>=2.14.0
+sentry-sdk[fastapi]==2.64.0
 
 # MCP server
 mcp>=1.0.0

@@ -4,7 +4,8 @@ RUN pip install --no-cache-dir \
     fastapi==0.115.6 \
     uvicorn==0.34.0 \
     httpx==0.28.1 \
-    "x402[fastapi,evm,extensions]>=2.14.0"
+    "x402[fastapi,evm,extensions]>=2.14.0" \
+    "sentry-sdk[fastapi]==2.64.0"
 COPY gateway.py .
 COPY static/ static/
 EXPOSE 8080

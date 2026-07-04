@@ -6,17 +6,16 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# SGLang with FlashInfer (CUDA 12.4 + Torch 2.4)
+# SGLang with FlashInfer (CUDA 12.4 + Torch 2.4).
+# Pinned to 0.4.1.post7: this is the last release whose "srt"/"all" extra
+# leaves torch unversioned (so pip keeps the base image's CUDA build instead
+# of upgrading to whatever the unpinned "sglang[all]" latest requires — recent
+# releases pin torch==2.11.0, which drags in a mismatched torch/torchvision/
+# flashinfer set and breaks CUDA detection at runtime) and requires
+# flashinfer==0.1.6, matching the cu124/torch2.4 wheel below.
 RUN pip install --no-cache-dir \
-    "sglang[all]" \
+    "sglang[all]==0.4.1.post7" \
     --find-links https://flashinfer.ai/whl/cu124/torch2.4/flashinfer/
-
-# sglang[all] can pull a CPU-only torch wheel from PyPI, silently overwriting
-# the CUDA build in the base image. Force the CUDA build back — torchvision
-# must be reinstalled in lockstep or its compiled ops ABI-mismatch torch
-# (e.g. "operator torchvision::nms does not exist").
-RUN pip install --no-cache-dir --force-reinstall \
-    torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu124
 
 # Python dependencies
 COPY requirements.txt .

@@ -57,10 +57,13 @@ Rules:
 - For "find me stocks" or screening: use screen_stocks
 - For stock analysis: use get_market_data first, then due_diligence_report if needed
 - For deep fundamental analysis: use fetch_sec_10k_tool
-- Your final answer must include the concrete figures the tools returned
-  (price, P/E, beta, margin, verdict, specific risks/strengths) — never
-  replace them with a vague summary like "high potential" or "good rating".
-  Concise means no filler wording, not omitting the tool's actual numbers.
+- A tool's raw output is a REPORT, not a hint. Your final answer must carry
+  forward every line item it returned — every metric, every year-over-year
+  change, every verdict and risk it lists — not a cherry-picked subset.
+  If a tool returns 10 line items, your answer should reference all 10, not
+  the 2 that seemed most important to you. Never compress a structured
+  report down to one vague sentence like "strong growth" or "high potential".
+- Concise means no filler wording, not fewer facts.
 - Be professional in your final answers""")
 
 

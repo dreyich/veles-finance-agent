@@ -4,6 +4,7 @@ import json
 import os
 import pathlib
 import re
+import uuid
 import uvicorn
 from datetime import datetime
 from typing import Literal
@@ -22,6 +23,41 @@ from agent.sec_tool import fetch_sec_10k, format_sec_report
 if os.getenv("SENTRY_DSN"):
     import sentry_sdk
     sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("SENTRY_ENVIRONMENT", "production"))
+
+# WORM audit logging — the local traces.jsonl file (below) is append-only in
+# practice but not immutable: anyone with volume access can edit or delete
+# past entries. S3 Object Lock (governance/compliance mode) makes each trace
+# genuinely un-editable/un-deletable for its retention period, which matters
+# for SEC-style audit requirements. Inactive unless AUDIT_S3_BUCKET is set —
+# safe to ship before that bucket exists.
+_AUDIT_S3_BUCKET = os.getenv("AUDIT_S3_BUCKET")
+
+
+def _upload_trace_worm(trace: dict) -> None:
+    if not _AUDIT_S3_BUCKET:
+        return
+    try:
+        import boto3
+        s3 = boto3.client("s3", region_name=os.getenv("AWS_REGION", "us-east-1"))
+        key = f"traces/{trace['ts']}_{uuid.uuid4().hex[:8]}.json"
+        put_kwargs = {
+            "Bucket": _AUDIT_S3_BUCKET,
+            "Key": key,
+            "Body": json.dumps(trace).encode("utf-8"),
+            "ContentType": "application/json",
+        }
+        # Object Lock requires the bucket to have it enabled; retention mode/
+        # period are only sent if explicitly configured, so this doesn't
+        # break on a bucket that hasn't set up Object Lock yet.
+        retain_days = os.getenv("AUDIT_S3_RETENTION_DAYS")
+        if retain_days:
+            from datetime import timedelta
+            put_kwargs["ObjectLockMode"] = os.getenv("AUDIT_S3_LOCK_MODE", "COMPLIANCE")
+            put_kwargs["ObjectLockRetainUntilDate"] = datetime.utcnow() + timedelta(days=int(retain_days))
+        s3.put_object(**put_kwargs)
+    except Exception:
+        pass  # audit logging must never break the actual user-facing request
+
 
 # ── App & client ──────────────────────────────────────────────────────────────
 
@@ -412,6 +448,7 @@ async def agent_chat(req: AgentRequest):
             lambda: _traces_path.open("a", encoding="utf-8").write(json.dumps(trace) + "\n")
         )
     )
+    asyncio.create_task(asyncio.to_thread(_upload_trace_worm, trace))
 
     return response
 

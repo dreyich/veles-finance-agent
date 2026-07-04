@@ -1,6 +1,6 @@
 [project]
 name = "veles-finance-mcp"
-version = "1.0.2"
+version = "1.0.3"
 description = "Veles Finance Agent MCP server — institutional DD reports for Claude Desktop, Cursor, Windsurf"
 readme = "README.md"
 license = { text = "Apache-2.0" }

@@ -38,7 +38,9 @@ RUN pip install --no-cache-dir \
 # transformers==4.51.1 sglang itself pins ("ModuleNotFoundError: No module
 # named 'transformers.masking_utils'"). Pin to a release from the same era
 # as sglang 0.4.6.post5 (2025-05-24) that doesn't reference it.
-RUN pip install --no-cache-dir compressed-tensors==0.10.0
+# accelerate: compressed-tensors' offload.py hard-requires it at import time
+# ("Please install `accelerate`") but doesn't declare it as a dependency.
+RUN pip install --no-cache-dir compressed-tensors==0.10.0 accelerate
 
 # Python dependencies (FastAPI gateway, LangGraph orchestrator, x402 — none of
 # these touch torch/transformers, so they're safe to layer on top)

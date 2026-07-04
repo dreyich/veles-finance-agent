@@ -18,7 +18,19 @@ from x402.extensions.bazaar import declare_discovery_extension, bazaar_resource_
 
 if os.getenv("SENTRY_DSN"):
     import sentry_sdk
-    sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("SENTRY_ENVIRONMENT", "production"))
+    # See main.py for why default_integrations is off: sentry_sdk's
+    # auto-integration scan imports every optional library it finds
+    # installed, and that crashed the RunPod process outright when an
+    # installed anthropic/typing_extensions combination raised a bare
+    # TypeError (not the ImportError sentry_sdk guards against) during the
+    # scan. This service doesn't currently hit that specific package, but
+    # the same failure mode applies to any future dependency.
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+        default_integrations=False,
+        integrations=[],
+    )
 
 _STATIC = pathlib.Path(__file__).parent / "static"
 

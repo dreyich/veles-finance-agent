@@ -22,7 +22,19 @@ from agent.sec_tool import fetch_sec_10k, format_sec_report
 
 if os.getenv("SENTRY_DSN"):
     import sentry_sdk
-    sentry_sdk.init(dsn=os.getenv("SENTRY_DSN"), environment=os.getenv("SENTRY_ENVIRONMENT", "production"))
+    # default_integrations=False is deliberate: sentry_sdk's auto-integration
+    # scan imports every optional library it finds installed (including
+    # anthropic, pulled in transitively here), and a broken anthropic/
+    # typing_extensions combination raised a bare TypeError during that scan
+    # (not the ImportError sentry_sdk guards against), crashing the whole
+    # process on startup. Explicit integrations only — safer than "auto-detect
+    # everything on the machine".
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+        default_integrations=False,
+        integrations=[],
+    )
 
 # WORM audit logging — the local traces.jsonl file (below) is append-only in
 # practice but not immutable: anyone with volume access can edit or delete

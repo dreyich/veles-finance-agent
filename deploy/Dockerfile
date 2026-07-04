@@ -32,6 +32,14 @@ RUN pip install --no-cache-dir \
     "sglang[all]==0.4.6.post5" \
     --find-links https://flashinfer.ai/whl/cu124/torch2.6/flashinfer-python/
 
+# vllm (pulled in by sglang) depends on compressed-tensors with no version
+# pin. Unpinned, pip installs today's latest, which imports
+# transformers.masking_utils — a module that doesn't exist in the
+# transformers==4.51.1 sglang itself pins ("ModuleNotFoundError: No module
+# named 'transformers.masking_utils'"). Pin to a release from the same era
+# as sglang 0.4.6.post5 (2025-05-24) that doesn't reference it.
+RUN pip install --no-cache-dir compressed-tensors==0.10.0
+
 # Python dependencies (FastAPI gateway, LangGraph orchestrator, x402 — none of
 # these touch torch/transformers, so they're safe to layer on top)
 COPY requirements.txt .

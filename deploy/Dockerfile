@@ -11,6 +11,11 @@ RUN pip install --no-cache-dir \
     "sglang[all]" \
     --find-links https://flashinfer.ai/whl/cu124/torch2.4/flashinfer/
 
+# sglang[all] can pull a CPU-only torch wheel from PyPI, silently overwriting
+# the CUDA build in the base image. Force the CUDA build back.
+RUN pip install --no-cache-dir --force-reinstall \
+    torch==2.4.0 --index-url https://download.pytorch.org/whl/cu124
+
 # Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt

@@ -19,13 +19,23 @@ _BASE = "https://data.sec.gov"
 
 
 def yf_with_retry(fn, retries: int = 5, base_delay: float = 2.0):
-    """Run a yfinance call with exponential backoff on transient errors (Yahoo 429 rate limits)."""
+    """Run a yfinance call with exponential backoff on transient errors.
+
+    A 429 from Yahoo is treated as fail-fast, not retried with backoff: in
+    practice it's been a sustained per-IP block (every attempt in the same
+    request fails), not a transient blip, so spending up to ~30s retrying it
+    just risks the frontend timing out before the fallback chain (fast_info /
+    Finnhub) even gets a chance to run. Other transient errors still get the
+    full exponential backoff.
+    """
     last_exc = None
     for attempt in range(retries):
         try:
             return fn()
         except Exception as exc:
             last_exc = exc
+            if "429" in str(exc):
+                break
             if attempt < retries - 1:
                 time.sleep(base_delay * (2 ** attempt))
     raise last_exc

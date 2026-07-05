@@ -1,5 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
+import os
 import httpx
 import yfinance as yf
 from langchain_core.tools import tool
@@ -7,6 +8,36 @@ from .sec_tool import fetch_sec_10k_tool
 from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_stocks, yf_with_retry
 
 _NBU_URL = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange"
+_FINNHUB_URL = "https://finnhub.io/api/v1/quote"
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+
+
+def _finnhub_quote(ticker: str) -> str | None:
+    """Last-resort price-only fallback via Finnhub's free tier, used only when
+    yfinance (both .info and fast_info) fails — e.g. Yahoo IP rate limiting.
+    Returns None if no FINNHUB_API_KEY is configured or the call fails, so
+    callers can fall through to the generic error message."""
+    if not FINNHUB_API_KEY:
+        return None
+    try:
+        resp = httpx.get(_FINNHUB_URL, params={"symbol": ticker, "token": FINNHUB_API_KEY}, timeout=10.0)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception:
+        return None
+
+    price = data.get("c")  # current price
+    prev = data.get("pc")  # previous close
+    if not price:
+        return None
+
+    change = ""
+    if prev:
+        delta = price - prev
+        pct = (delta / prev) * 100 if prev else 0
+        sign = "+" if delta >= 0 else ""
+        change = f"  Change: {sign}{delta:.2f} ({sign}{pct:.2f}%)"
+    return f"Market Data — {ticker} (partial — fundamentals unavailable, via Finnhub fallback)\nPrice: {_fmt_price(price)}{change}"
 
 # ISO codes NBU actually publishes a rate for — used to catch cases where the
 # orchestrator passes a currency code (or FX pair like "USDUAH") into
@@ -93,7 +124,13 @@ def get_market_data(ticker: str) -> str:
                 f"Price: {_fmt_price(price)}{change}"
             )
         except Exception:
-            return f"Error fetching data for {ticker}: {exc}"
+            pass
+
+        finnhub_result = _finnhub_quote(ticker)
+        if finnhub_result:
+            return finnhub_result
+
+        return f"Error fetching data for {ticker}: {exc}"
 
     # News is a nice-to-have — a Yahoo rate limit on this call alone
     # shouldn't discard the price/fundamentals we already fetched above.

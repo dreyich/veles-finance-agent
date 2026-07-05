@@ -16,13 +16,20 @@ import os
 from typing import Annotated, List
 from typing_extensions import TypedDict
 
-from langchain_core.messages import BaseMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 
 from .tools import TOOLS
+
+# Hard cap on tool-call rounds per request. Without this, a slow/failing tool
+# (e.g. Yahoo Finance rate-limiting) combined with the orchestrator retrying
+# the same call on its own can chain multiple ~30s tool rounds back to back,
+# blowing past the frontend's request timeout with no user-facing message at
+# all — a bounded "I couldn't get this" beats an unbounded network error.
+MAX_TOOL_CALLS = 4
 
 ORCHESTRATOR_BASE_URL = os.getenv("ORCHESTRATOR_BASE_URL", "http://localhost:11434/v1")
 # Dev default: llama3.2:3b (fits with Veles 7B on single GPU)
@@ -83,6 +90,10 @@ Rules:
   This rule applies to analytical reports (due diligence, 10-K comparisons,
   screening results) — it does NOT mean padding a simple lookup with filler.
 - Concise means no filler wording, not fewer facts.
+- If a tool returned a specific number (a rate, a price, a ratio), your
+  answer MUST state that exact number. Never reply with something generic
+  like "let me know if you need more info" instead of the actual figure —
+  that is a wrong answer, not a short one.
 - Match response length to what was actually asked:
   - Simple factual lookups (a single price, a single rate, one specific
     number, yes/no) get a direct 1-2 sentence answer. No preamble, no
@@ -98,9 +109,18 @@ Rules:
 
 class AgentState(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
+    tool_call_count: int
 
 
 def agent_node(state: AgentState) -> dict:
+    if state.get("tool_call_count", 0) >= MAX_TOOL_CALLS:
+        limit_msg = AIMessage(content=(
+            "Досягнуто ліміт звернень до інструментів для цього запиту "
+            "(дані, схоже, тимчасово недоступні). Спробуйте, будь ласка, "
+            "повторити трохи пізніше або перефразувати питання."
+        ))
+        return {"messages": [limit_msg]}
+
     messages = state["messages"]
     # Inject system prompt if first turn
     if not any(isinstance(m, SystemMessage) for m in messages):
@@ -143,6 +163,9 @@ def tool_node(state: AgentState) -> dict:
                 "[TOOL CALL FAILED — this is not real data, do not present it "
                 f"as such; tell the user the lookup failed] {content}"
             )
+    last_ai = state["messages"][-1]
+    calls_made = len(getattr(last_ai, "tool_calls", None) or [])
+    result["tool_call_count"] = state.get("tool_call_count", 0) + calls_made
     return result
 
 _builder = StateGraph(AgentState)

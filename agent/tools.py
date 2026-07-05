@@ -8,8 +8,28 @@ from .sec_tool import fetch_sec_10k_tool
 from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_stocks, yf_with_retry
 
 _NBU_URL = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange"
-_FINNHUB_URL = "https://finnhub.io/api/v1/quote"
+_FINNHUB_QUOTE_URL = "https://finnhub.io/api/v1/quote"
+_FINNHUB_PROFILE_URL = "https://finnhub.io/api/v1/stock/profile2"
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", "")
+
+
+def _finnhub_get(url: str, ticker: str) -> dict | None:
+    try:
+        # Finnhub compresses responses with zstd by default; the zstandard
+        # decoder in this environment fails on it ("Allocation error: not
+        # enough memory") even for a tiny JSON payload. Requesting gzip
+        # instead avoids that decode path entirely.
+        resp = httpx.get(
+            url,
+            params={"symbol": ticker, "token": FINNHUB_API_KEY},
+            headers={"Accept-Encoding": "gzip, deflate"},
+            timeout=10.0,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as exc:
+        print(f"finnhub_call_failed url={url} ticker={ticker} error={exc}")
+        return None
 
 
 def _finnhub_quote(ticker: str) -> str | None:
@@ -20,21 +40,9 @@ def _finnhub_quote(ticker: str) -> str | None:
     if not FINNHUB_API_KEY:
         print(f"finnhub_skipped_no_key ticker={ticker}")
         return None
-    try:
-        # Finnhub compresses responses with zstd by default; the zstandard
-        # decoder in this environment fails on it ("Allocation error: not
-        # enough memory") even for a tiny JSON payload. Requesting gzip
-        # instead avoids that decode path entirely.
-        resp = httpx.get(
-            _FINNHUB_URL,
-            params={"symbol": ticker, "token": FINNHUB_API_KEY},
-            headers={"Accept-Encoding": "gzip, deflate"},
-            timeout=10.0,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as exc:
-        print(f"finnhub_call_failed ticker={ticker} error={exc}")
+
+    data = _finnhub_get(_FINNHUB_QUOTE_URL, ticker)
+    if not data:
         return None
 
     price = data.get("c")  # current price
@@ -50,7 +58,20 @@ def _finnhub_quote(ticker: str) -> str | None:
         pct = (delta / prev) * 100 if prev else 0
         sign = "+" if delta >= 0 else ""
         change = f"  Change: {sign}{delta:.2f} ({sign}{pct:.2f}%)"
-    return f"Market Data — {ticker} (partial — fundamentals unavailable, via Finnhub fallback)\nPrice: {_fmt_price(price)}{change}"
+
+    # Company profile (market cap, shares outstanding) is a separate free
+    # Finnhub endpoint — best-effort, since losing it shouldn't lose the price.
+    fundamentals = ""
+    profile = _finnhub_get(_FINNHUB_PROFILE_URL, ticker)
+    if profile and profile.get("marketCapitalization"):
+        # Finnhub returns marketCapitalization in millions of USD.
+        cap = profile["marketCapitalization"] * 1_000_000
+        fundamentals = f"\nMarket Cap: {_fmt_cap(cap)}"
+
+    return (
+        f"Market Data — {ticker} (partial — via Finnhub fallback, some fundamentals unavailable)\n"
+        f"Price: {_fmt_price(price)}{change}{fundamentals}"
+    )
 
 # ISO codes NBU actually publishes a rate for — used to catch cases where the
 # orchestrator passes a currency code (or FX pair like "USDUAH") into

@@ -17,19 +17,39 @@ const STEPS = {
   market: ["Fetching price history…", "Reading momentum…", "Comparing benchmarks…", "Detecting trend…"],
 };
 
+// Serverless GPU worker cold starts take 10-30s+ (model download + SGLang
+// boot) before the first token comes back. Without this, the analytical
+// steps above cycle forever and look identical to a normal fast response —
+// the user has no way to tell "still thinking" from "actually stuck", which
+// is what made a slow-but-working cold start look like a hang. Past this
+// threshold, tell them what's actually happening instead of pretending it's
+// analysis.
+const WARMUP_THRESHOLD_MS = 7000;
+const WARMUP_STEPS = [
+  "Waking up the model on the server…",
+  "Cold start — this is rare, but happens…",
+  "Almost there, model is nearly ready…",
+];
+
 function VelesThinking({ type = "diligence" }) {
   const steps = STEPS[type] || STEPS.diligence;
   const [idx, setIdx] = useTV(0);
+  const [warmingUp, setWarmingUp] = useTV(false);
   useTVE(() => {
     setIdx(0);
+    setWarmingUp(false);
     const id = setInterval(() => setIdx((i) => (i + 1) % steps.length), 1600);
-    return () => clearInterval(id);
+    const warmupTimer = setTimeout(() => setWarmingUp(true), WARMUP_THRESHOLD_MS);
+    return () => { clearInterval(id); clearTimeout(warmupTimer); };
   }, [type]);
+
+  const activeSteps = warmingUp ? WARMUP_STEPS : steps;
+  const activeIdx = idx % activeSteps.length;
 
   return (
     <div style={{ paddingLeft: 38, minHeight: 22, display: "flex", alignItems: "center" }}>
-      <span key={idx} className="tv-step" style={{ fontSize: 14.5, fontWeight: 480, letterSpacing: "-0.01em" }}>
-        {steps[idx]}
+      <span key={`${warmingUp}-${activeIdx}`} className="tv-step" style={{ fontSize: 14.5, fontWeight: 480, letterSpacing: "-0.01em" }}>
+        {activeSteps[activeIdx]}
       </span>
       <style>{`
         .tv-step{

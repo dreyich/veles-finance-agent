@@ -118,7 +118,7 @@ function copyText(text) {
   return legacy();
 }
 
-function Bubble({ role, text }) {
+function Bubble({ role, text, onRetry }) {
   const [hov, setHov] = useState(false);
   const [copied, setCopied] = useState(false);
   const mobile = window.useVelesMobile();
@@ -159,6 +159,16 @@ function Bubble({ role, text }) {
         ) : (
           <div style={{ fontSize: 15, lineHeight: 1.65, color: error ? "#a03f37" : "var(--ink-1)",
             whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{text}</div>
+        )}
+        {error && onRetry && (
+          <button onClick={onRetry}
+            style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px",
+              borderRadius: 8, border: "1px solid rgba(194,69,60,0.25)", cursor: "pointer",
+              fontSize: 12.5, fontWeight: 550, color: "#a03f37",
+              background: "rgba(194,69,60,0.06)" }}>
+            <i data-lucide="rotate-cw" style={{ width: 12, height: 12 }}></i>
+            Try again
+          </button>
         )}
         {!error && (
           <div style={{ height: 26, marginTop: 4, display: "flex", alignItems: "center",
@@ -265,8 +275,13 @@ function ChatScreen() {
   const appendMsg = (id, m) =>
     setChats((cs) => cs.map((c) => c.id === id ? { ...c, msgs: [...c.msgs, m], ts: Date.now() } : c));
 
-  const send = async (text) => {
-    let id = activeId;
+  const send = async (text, { isRetry = false, chatId = null } = {}) => {
+    // chatId is passed explicitly on the internal retry call below instead of
+    // reading activeId from state — activeId is only guaranteed current on
+    // the *next* render, so the recursive retry call (made from inside this
+    // same invocation, before React re-renders) would otherwise see the
+    // pre-update value and mint a second chat entry for a brand-new chat.
+    let id = chatId || activeId;
     const history = msgs.map((m) => ({ role: m.role === "user" ? "user" : "assistant", content: m.text }));
     if (!id) {
       id = uid();
@@ -274,7 +289,7 @@ function ChatScreen() {
       setChats((cs) => [{ id, title, msgs: [], ts: Date.now() }, ...cs]);
       setActiveId(id);
     }
-    appendMsg(id, { role: "user", text });
+    if (!isRetry) appendMsg(id, { role: "user", text });
     setThinkType(window.velesDetectType ? window.velesDetectType(text) : "diligence");
     setThinkingId(id);
     const ctrl = new AbortController();
@@ -283,8 +298,23 @@ function ChatScreen() {
       const reply = await askVeles(text, history, ctrl.signal);
       appendMsg(id, { role: "ai", text: reply });
     } catch (err) {
-      if (err.name !== "AbortError") {
-        appendMsg(id, { role: "error", text: `Something went wrong: ${err.message}` });
+      if (err.name === "AbortError") { /* user-cancelled, no message */ }
+      else if (err instanceof TypeError && !isRetry) {
+        // A network-layer failure (connection dropped mid-request) rather than
+        // an HTTP error response — this is exactly what a RunPod cold start
+        // that outlasts an intermediate proxy's timeout looks like, and the
+        // backend has often actually finished the work by now. One silent
+        // retry covers that case before bothering the user with an error.
+        await send(text, { isRetry: true, chatId: id });
+        return;
+      } else if (err instanceof TypeError) {
+        appendMsg(id, {
+          role: "error",
+          text: "The server is taking a while to wake up (cold start) and the connection dropped. Try again — the second request usually goes through fast.",
+          retryText: text,
+        });
+      } else {
+        appendMsg(id, { role: "error", text: `Something went wrong: ${err.message}`, retryText: text });
       }
     } finally {
       if (abortRef.current === ctrl) abortRef.current = null;
@@ -385,7 +415,10 @@ function ChatScreen() {
           <div style={{ maxWidth: 720, margin: "0 auto", boxSizing: "border-box",
             padding: mobile ? "12px 14px 150px" : "14px 26px 170px",
             display: "flex", flexDirection: "column", gap: mobile ? 16 : 20 }}>
-            {msgs.map((m, i) => <Bubble key={i} role={m.role} text={m.text} />)}
+            {msgs.map((m, i) => (
+              <Bubble key={i} role={m.role} text={m.text}
+                onRetry={m.retryText ? () => send(m.retryText, { isRetry: true, chatId: activeId }) : null} />
+            ))}
             {thinkingHere && <window.VelesThinking type={thinkType} />}
           </div>
         </div>

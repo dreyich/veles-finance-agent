@@ -317,7 +317,8 @@ def ping():
 async def warm():
     """Pre-warming endpoint — called by frontend on page load to eliminate cold start."""
     try:
-        resp = client.chat.completions.create(
+        resp = await asyncio.to_thread(
+            client.chat.completions.create,
             model=_VELES_MODEL,
             messages=[{"role": "user", "content": _WARM_PROMPT}],
             max_tokens=1,
@@ -336,14 +337,20 @@ def health():
         "version": "2.4.0",
     }
 
+# Each handler below wraps a synchronous, potentially slow call (yfinance,
+# SEC EDGAR, or an OpenAI-client HTTP request) in asyncio.to_thread — called
+# directly, any of these would block this worker's entire single-threaded
+# event loop for their full duration, including /ping health checks, the
+# same issue found and fixed on /agent above.
+
 @api.post("/due-diligence", response_model=DueDiligenceResponse)
 async def due_diligence(ticker: str, risk_profile: str = "moderate"):
-    return run_due_diligence(ticker, risk_profile)
+    return await asyncio.to_thread(run_due_diligence, ticker, risk_profile)
 
 @api.post("/sec", response_model=SecResponse)
 async def sec_10k(ticker: str):
     """Fetch the latest 10-K annual report from SEC EDGAR and extract key financials."""
-    data = fetch_sec_10k(ticker.strip().upper())
+    data = await asyncio.to_thread(fetch_sec_10k, ticker.strip().upper())
     return SecResponse(
         ticker=data.get("ticker", ticker),
         filing_date=data.get("filing_date"),
@@ -356,7 +363,7 @@ async def sec_10k(ticker: str):
 
 @api.post("/kelly", response_model=KellyResponse)
 async def kelly(win_probability: float, payout_ratio: float):
-    return kelly_position_size(win_probability, payout_ratio)
+    return await asyncio.to_thread(kelly_position_size, win_probability, payout_ratio)
 
 @api.post("/ask")
 async def ask(req: AskRequest):
@@ -366,27 +373,31 @@ async def ask(req: AskRequest):
     if any(w in msg_lower for w in ["due diligence", "dd ", "analyse", "analyze", "suitable", "аналіз"]):
         ticker = _extract_ticker(msg)
         if ticker:
-            result = run_due_diligence(ticker, _extract_risk(msg))
+            result = await asyncio.to_thread(run_due_diligence, ticker, _extract_risk(msg))
             return result.model_dump()
 
     if any(w in msg_lower for w in ["10-k", "10k", "annual report", "sec", "edgar", "filing", "річний звіт"]):
         ticker = _extract_ticker(msg)
         if ticker:
-            data = fetch_sec_10k(ticker)
+            data = await asyncio.to_thread(fetch_sec_10k, ticker)
             return {"response": format_sec_report(data)}
 
     if any(w in msg_lower for w in ["price", "market data", "stock", "ціна"]):
         ticker = _extract_ticker(msg)
         if ticker:
-            return {"response": get_market_data(ticker)}
+            return {"response": await asyncio.to_thread(get_market_data, ticker)}
 
     if "kelly" in msg_lower:
         nums = [float(x) for x in re.findall(r'\d+\.?\d*', msg)]
         if len(nums) >= 2:
-            return kelly_position_size(nums[0]/100 if nums[0] > 1 else nums[0], nums[1]).model_dump()
+            result = await asyncio.to_thread(
+                kelly_position_size, nums[0]/100 if nums[0] > 1 else nums[0], nums[1]
+            )
+            return result.model_dump()
 
     # Generic question
-    resp = client.chat.completions.create(
+    resp = await asyncio.to_thread(
+        client.chat.completions.create,
         model=_VELES_MODEL,
         messages=[
             {"role": "system", "content": "You are Veles, a professional financial analyst AI. Answer concisely and professionally."},
@@ -415,12 +426,21 @@ async def agent_chat(req: AgentRequest):
             messages.append(AIMessage(content=content))
     messages.append(LCHuman(content=req.message))
 
-    # Run the agent graph. agent_node already retries+degrades tool-calling
-    # failures internally, but this is a last-resort safety net for anything
-    # else unhandled in the graph — better a clean apologetic response than
-    # an uncaught exception the client sees as a dropped connection.
+    # Run the agent graph. .invoke() is synchronous and blocks the whole
+    # thread it runs on — called directly inside this async endpoint, it was
+    # blocking the ENTIRE single-worker event loop for the full 10-40+
+    # seconds a multi-tool-call request can take, including /ping health
+    # checks and any other concurrent request on this worker. If RunPod's own
+    # health monitoring saw a dead /ping during that window, that's a much
+    # more likely explanation for today's intermittent hangs than a proxy
+    # idle-timeout theory. Running it in a thread keeps the event loop free.
+    #
+    # agent_node already retries+degrades tool-calling failures internally,
+    # but this try/except is a last-resort safety net for anything else
+    # unhandled in the graph — better a clean apologetic response than an
+    # uncaught exception the client sees as a dropped connection.
     try:
-        result = langgraph_agent.invoke({"messages": messages})
+        result = await asyncio.to_thread(langgraph_agent.invoke, {"messages": messages})
     except Exception as exc:
         print(f"agent_graph_invoke_failed: {exc}")
         return AgentResponse(

@@ -415,8 +415,19 @@ async def agent_chat(req: AgentRequest):
             messages.append(AIMessage(content=content))
     messages.append(LCHuman(content=req.message))
 
-    # Run the agent graph
-    result = langgraph_agent.invoke({"messages": messages})
+    # Run the agent graph. agent_node already retries+degrades tool-calling
+    # failures internally, but this is a last-resort safety net for anything
+    # else unhandled in the graph — better a clean apologetic response than
+    # an uncaught exception the client sees as a dropped connection.
+    try:
+        result = langgraph_agent.invoke({"messages": messages})
+    except Exception as exc:
+        print(f"agent_graph_invoke_failed: {exc}")
+        return AgentResponse(
+            answer="Вибачте, сталася неочікувана помилка під час обробки запиту. Спробуйте, будь ласка, ще раз.",
+            tools_used=[],
+            steps=0,
+        )
 
     # Extract answer and tool usage from message history
     tools_used = []

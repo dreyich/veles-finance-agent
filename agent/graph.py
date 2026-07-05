@@ -130,7 +130,25 @@ def agent_node(state: AgentState) -> dict:
     # Inject system prompt if first turn
     if not any(isinstance(m, SystemMessage) for m in messages):
         messages = [SYSTEM_PROMPT] + list(messages)
-    response = orchestrator_with_tools.invoke(messages)
+    try:
+        response = orchestrator_with_tools.invoke(messages)
+    except Exception as exc:
+        # Groq's tool-calling grammar for llama-3.1-8b-instant occasionally
+        # rejects a well-formed call (400 tool_use_failed) even when the model
+        # picked the right tool and arguments — a known reliability gap in
+        # their constrained decoding, not a bug in our prompt or tools. Left
+        # uncaught, this crashed the whole request (surfacing as a dropped
+        # connection / NetworkError on the frontend) instead of a normal
+        # answer. One retry is often enough since it's non-deterministic;
+        # if it fails twice, degrade to a plain apology rather than crashing.
+        try:
+            response = orchestrator_with_tools.invoke(messages)
+        except Exception:
+            response = AIMessage(content=(
+                "Вибачте, не вдалось обробити цей запит через тимчасову "
+                "помилку виклику інструмента. Спробуйте, будь ласка, "
+                "перефразувати питання або повторити за хвилину."
+            ))
     return {"messages": [response]}
 
 

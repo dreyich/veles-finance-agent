@@ -104,6 +104,31 @@ def _fmt_price(v): return f"${v:,.2f}" if v is not None else "N/A"
 def _fmt_ratio(v, d=2): return f"{v:.{d}f}" if v is not None else "N/A"
 
 
+def _price_fallback(t, ticker: str) -> str | None:
+    """Try fast_info, then Finnhub, for at least a price when the full .info
+    call didn't yield one. Returns None if both fail, so the caller can
+    decide what to do (return a clean error rather than fabricate data)."""
+    try:
+        fi = t.fast_info
+        price = fi.get("lastPrice")
+        prev = fi.get("previousClose")
+        if price is not None:
+            change = ""
+            if prev:
+                delta = price - prev
+                pct = (delta / prev) * 100
+                sign = "+" if delta >= 0 else ""
+                change = f"  Change: {sign}{delta:.2f} ({sign}{pct:.2f}%)"
+            return (
+                f"Market Data — {ticker} (partial — fundamentals unavailable, Yahoo rate-limited)\n"
+                f"Price: {_fmt_price(price)}{change}"
+            )
+    except Exception as fi_exc:
+        print(f"fast_info_fallback_failed ticker={ticker} error={fi_exc}")
+
+    return _finnhub_quote(ticker)
+
+
 @tool
 def get_market_data(ticker: str) -> str:
     """Fetch live stock price, fundamentals, and recent news for any ticker symbol."""
@@ -120,30 +145,22 @@ def get_market_data(ticker: str) -> str:
         # Yahoo's full quoteSummary endpoint (behind .info) rate-limits harder
         # than fast_info's lighter endpoint. fast_info won't have fundamentals
         # (P/E, margin, etc.) but at least returns price when .info is blocked.
-        try:
-            fi = t.fast_info
-            price = fi.get("lastPrice")
-            prev = fi.get("previousClose")
-            if price is None:
-                raise exc
-            change = ""
-            if prev:
-                delta = price - prev
-                pct = (delta / prev) * 100
-                sign = "+" if delta >= 0 else ""
-                change = f"  Change: {sign}{delta:.2f} ({sign}{pct:.2f}%)"
-            return (
-                f"Market Data — {ticker} (partial — fundamentals unavailable, Yahoo rate-limited)\n"
-                f"Price: {_fmt_price(price)}{change}"
-            )
-        except Exception as fi_exc:
-            print(f"fast_info_fallback_failed ticker={ticker} error={fi_exc}")
-
-        finnhub_result = _finnhub_quote(ticker)
-        if finnhub_result:
-            return finnhub_result
-
+        fallback = _price_fallback(t, ticker)
+        if fallback:
+            return fallback
         return f"Error fetching data for {ticker}: {exc}"
+
+    # A Yahoo rate limit doesn't always surface as an exception here — yfinance
+    # can swallow the 429 internally and return `info` "successfully" with the
+    # price fields simply missing. Check for that explicitly rather than only
+    # trusting the try/except, or this silently returns a report with no price
+    # and no error, which the model then can't distinguish from "no data".
+    price = info.get("currentPrice") or info.get("regularMarketPrice")
+    if price is None:
+        fallback = _price_fallback(t, ticker)
+        if fallback:
+            return fallback
+        return f"Error fetching data for {ticker}: Yahoo returned no price (likely rate-limited)."
 
     # News is a nice-to-have — a Yahoo rate limit on this call alone
     # shouldn't discard the price/fundamentals we already fetched above.
@@ -153,7 +170,6 @@ def get_market_data(ticker: str) -> str:
         news = []
 
     company = info.get("longName") or info.get("shortName") or ticker
-    price = info.get("currentPrice") or info.get("regularMarketPrice")
     prev = info.get("previousClose") or info.get("regularMarketPreviousClose")
 
     change = "N/A"

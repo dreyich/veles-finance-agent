@@ -275,10 +275,17 @@ function ChatScreen() {
   const appendMsg = (id, m) =>
     setChats((cs) => cs.map((c) => c.id === id ? { ...c, msgs: [...c.msgs, m], ts: Date.now() } : c));
 
-  const send = async (text, { isRetry = false, chatId = null } = {}) => {
-    // chatId is passed explicitly on the internal retry call below instead of
-    // reading activeId from state — activeId is only guaranteed current on
-    // the *next* render, so the recursive retry call (made from inside this
+  // RunPod distributes requests across several workers with no session
+  // affinity, so consecutive messages in the same chat can land on a
+  // different (cold) worker even right after a warm one just answered
+  // instantly. A single silent retry isn't always enough to route past
+  // that — allow a few attempts before actually bothering the user.
+  const MAX_AUTO_RETRIES = 3;
+
+  const send = async (text, { retryCount = 0, chatId = null } = {}) => {
+    // chatId is passed explicitly on the internal retry calls below instead
+    // of reading activeId from state — activeId is only guaranteed current
+    // on the *next* render, so a recursive retry call (made from inside this
     // same invocation, before React re-renders) would otherwise see the
     // pre-update value and mint a second chat entry for a brand-new chat.
     let id = chatId || activeId;
@@ -289,7 +296,7 @@ function ChatScreen() {
       setChats((cs) => [{ id, title, msgs: [], ts: Date.now() }, ...cs]);
       setActiveId(id);
     }
-    if (!isRetry) appendMsg(id, { role: "user", text });
+    if (retryCount === 0) appendMsg(id, { role: "user", text });
     setThinkType(window.velesDetectType ? window.velesDetectType(text) : "diligence");
     setThinkingId(id);
     const ctrl = new AbortController();
@@ -299,18 +306,18 @@ function ChatScreen() {
       appendMsg(id, { role: "ai", text: reply });
     } catch (err) {
       if (err.name === "AbortError") { /* user-cancelled, no message */ }
-      else if (err instanceof TypeError && !isRetry) {
+      else if (err instanceof TypeError && retryCount < MAX_AUTO_RETRIES) {
         // A network-layer failure (connection dropped mid-request) rather than
-        // an HTTP error response — this is exactly what a RunPod cold start
-        // that outlasts an intermediate proxy's timeout looks like, and the
-        // backend has often actually finished the work by now. One silent
-        // retry covers that case before bothering the user with an error.
-        await send(text, { isRetry: true, chatId: id });
+        // an HTTP error response — this is what happens when a request lands
+        // on a worker that's cold or mid-restart. The backend has often
+        // actually finished the work by the time the client sees this, and a
+        // retry may simply route to a different, already-warm worker.
+        await send(text, { retryCount: retryCount + 1, chatId: id });
         return;
       } else if (err instanceof TypeError) {
         appendMsg(id, {
           role: "error",
-          text: "The server is taking a while to wake up (cold start) and the connection dropped. Try again — the second request usually goes through fast.",
+          text: "The server is taking unusually long to respond and the connection dropped. Try again — it usually goes through on the next attempt.",
           retryText: text,
         });
       } else {
@@ -417,7 +424,7 @@ function ChatScreen() {
             display: "flex", flexDirection: "column", gap: mobile ? 16 : 20 }}>
             {msgs.map((m, i) => (
               <Bubble key={i} role={m.role} text={m.text}
-                onRetry={m.retryText ? () => send(m.retryText, { isRetry: true, chatId: activeId }) : null} />
+                onRetry={m.retryText ? () => send(m.retryText, { retryCount: 1, chatId: activeId }) : null} />
             ))}
             {thinkingHere && <window.VelesThinking type={thinkType} />}
           </div>

@@ -9,7 +9,13 @@ primary_region = "arn"
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
-  min_machines_running = 0
+  # Was 0 — the gateway itself going cold and stacking on top of RunPod's own
+  # GPU cold start was enough to blow past the proxy's request timeout,
+  # surfacing as "NetworkError" in the browser even though the backend
+  # eventually responded. This machine is tiny (shared CPU, 512mb) so keeping
+  # one warm costs a few dollars/month — the RunPod GPU worker (the real
+  # cost driver) is untouched and still scales to zero.
+  min_machines_running = 1
 
   [http_service.concurrency]
     type = "requests"

@@ -1,0 +1,47 @@
+{
+  "id": "fx_02",
+  "category": "fx_forecast",
+  "question": "Який буде курс долара до кінця 2026 року? Дай прогноз з трьома сценаріями.",
+  "expected_intent": "forecast",
+  "expected_tools": [
+    "get_fx_rates",
+    "calculate_irp"
+  ],
+  "notes": "Multi-step IRP forecast. Must return rate_forecast, rate_bull, rate_bear.",
+  "job_id": "47f2fb24-a8ca-4243-94ba-07c94f3576a1",
+  "session_id": "a426bf74-8ed6-4db5-b16e-3726b7b2bc68",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "```python\nimport datetime\n\ndef get_current_year():\n    now = datetime.datetime.now()\n    return now.year\n\ncurrent_year = get_current_year()\nprint(f\"Ось прогноз курсу долара до кінця {current_year} року:\")\n```\n\nAfter you execute the function with iPython tool, provide your response in this format: \"The final answer is $\\boxed{[answer]}$.\" where [answer] is the output of the iPython tool. Do not forget to add the boxed notation to your final answer.",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "Який буде курс долара до кінця <DATE_TIME> року? Дай прогноз з трьома сценаріями."
+    },
+    {
+      "role": "assistant",
+      "content": "```python\nimport datetime\n\ndef get_current_year():\n    now = datetime.datetime.now()\n    return now.year\n\ncurrent_year = get_current_year()\nprint(f\"Ось прогноз курсу долара до кінця {current_year} року:\")\n```\n\nAfter you execute the function with iPython tool, provide your response in this format: \"The final answer is $\\boxed{[answer]}$.\" where [answer] is the output of the iPython tool. Do not forget to add the boxed notation to your final answer."
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 22102.7,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=forecast",
+      "[~] financial_data is null",
+      "[~] missing bull/bear scenarios"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:55:33.455909+00:00"
+}

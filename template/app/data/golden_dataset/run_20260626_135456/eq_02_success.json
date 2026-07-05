@@ -1,0 +1,45 @@
+{
+  "id": "eq_02",
+  "category": "equity_dcf",
+  "question": "Порахуй intrinsic value для Apple (AAPL) з FCF $100B, WACC 9%, terminal growth 2.5%",
+  "expected_intent": "calculation",
+  "expected_tools": [
+    "calculate_dcf"
+  ],
+  "notes": "DCF valuation with explicit params.",
+  "job_id": "7123548f-b6b9-478a-9dd1-ba77769dbc6d",
+  "session_id": "3d7fd50f-4d7d-4c84-b459-fdfb811cdce7",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "```python\nimport math\n\ndef calculate_intrinsic_value(fcf, wacc, terminal_growth):\n    # Calculate the present value of the free cash flows\n    pv_fcf = fcf / (wacc - terminal_growth)\n    \n    # The intrinsic value is the sum of the present value of the free cash flows\n    intrinsic_value = pv_fcf\n    \n    return intrinsic_value\n\nfcf = 100e9  # $100B\nwacc = 0.09  # 9%\nterminal_growth = 0.025  # 2.5%\n\nintrinsic_value = calculate_intrinsic_value(fcf, wacc, terminal_growth)\n\nprint(f\"The intrinsic value of Apple (AAPL) is: ${intrinsic_value/1e9:.2f}B\")\n```",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "Порахуй intrinsic value для Apple (AAPL) з FCF $100B, WACC 9%, terminal growth 2.5%"
+    },
+    {
+      "role": "assistant",
+      "content": "```python\nimport math\n\ndef calculate_intrinsic_value(fcf, wacc, terminal_growth):\n    # Calculate the present value of the free cash flows\n    pv_fcf = fcf / (wacc - terminal_growth)\n    \n    # The intrinsic value is the sum of the present value of the free cash flows\n    intrinsic_value = pv_fcf\n    \n    return intrinsic_value\n\nfcf = 100e9  # $100B\nwacc = 0.09  # 9%\nterminal_growth = 0.025  # 2.5%\n\nintrinsic_value = calculate_intrinsic_value(fcf, wacc, terminal_growth)\n\nprint(f\"The intrinsic value of Apple (AAPL) is: ${intrinsic_value/1e9:.2f}B\")\n```"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 18516.7,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=calculation",
+      "[~] financial_data is null"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:57:26.733899+00:00"
+}

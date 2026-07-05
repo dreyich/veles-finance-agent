@@ -1,0 +1,14 @@
+{
+  "run_timestamp": "2026-06-26T10:52:19.958978+00:00",
+  "base_url": "http://localhost:8000/api/v1",
+  "total_questions": 1,
+  "passed": 0,
+  "failed": 1,
+  "pass_rate_pct": 0.0,
+  "avg_score": 0.0,
+  "avg_duration_ms": 92555.4,
+  "intent_breakdown": {
+    "N/A": 1
+  },
+  "golden_dataset_dir": "D:\\Finance AI agent\\template\\app\\data\\golden_dataset\\run_20260626_135044"
+}

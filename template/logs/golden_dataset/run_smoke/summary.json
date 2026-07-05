@@ -1,0 +1,14 @@
+{
+  "run_timestamp": "2026-06-25T17:51:37.276561+00:00",
+  "base_url": "http://localhost:8000/api/v1",
+  "total_questions": 1,
+  "passed": 0,
+  "failed": 1,
+  "pass_rate_pct": 0.0,
+  "avg_score": 0.0,
+  "avg_duration_ms": 46901.6,
+  "intent_breakdown": {
+    "N/A": 1
+  },
+  "golden_dataset_dir": "/app/logs/golden_dataset/run_smoke"
+}

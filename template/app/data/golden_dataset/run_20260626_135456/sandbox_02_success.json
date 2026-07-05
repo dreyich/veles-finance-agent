@@ -1,0 +1,45 @@
+{
+  "id": "sandbox_02",
+  "category": "sandbox_montecarlo",
+  "question": "Запусти Monte Carlo (10000 ітерацій) для курсу USD/UAH через 6 місяців з рівня 44.92 і волатильністю 0.5% в день",
+  "expected_intent": "calculation",
+  "expected_tools": [
+    "execute_python_sandbox"
+  ],
+  "notes": "Sandbox Monte Carlo simulation.",
+  "job_id": "619963d4-e5d8-4606-8716-b03eb8ea3d76",
+  "session_id": "985b525b-241c-447b-888c-acc9fa59a9e5",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "```python\nimport numpy as np\n\n# Define the parameters\nspot_rate = 44.92\nvolatility = 0.005  # 0.5%\ntime_to_maturity = 6 / 12  # 6 months in years\n\n# Calculate the number of steps\nnum_steps = 1000\n\n# Generate an array of random standard normal variables\nrandom_variables = np.random.normal(size=num_steps)\n\n# Calculate the future exchange rates using the Monte Carlo method\nfuture_exchange_rates = spot_rate * np.exp((0 - 0.5 * volatility ** 2) * time_to_maturity + volatility * np.sqrt(time_to_maturity) * random_variables)\n\n# Calculate the mean and standard deviation of the future exchange rates\nmean_future_exchange_rate = np.mean(future_exchange_rates)\nstd_dev_future_exchange_rate = np.std(future_exchange_rates)\n\n# Print the results\nprint(f\"Mean future exchange rate: {mean_future_exchange_rate:.2f}\")\nprint(f\"Standard deviation of future exchange rates: {std_dev_future_exchange_rate:.2f}\")\n```",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "<PERSON> (<DATE_TIME> ітерацій) для курсу USD/UAH через 6 місяців з рівня 44.92 і волатильністю 0.5% в <LOCATION>"
+    },
+    {
+      "role": "assistant",
+      "content": "```python\nimport numpy as np\n\n# Define the parameters\nspot_rate = 44.92\nvolatility = 0.005  # 0.5%\ntime_to_maturity = 6 / 12  # 6 months in years\n\n# Calculate the number of steps\nnum_steps = 1000\n\n# Generate an array of random standard normal variables\nrandom_variables = np.random.normal(size=num_steps)\n\n# Calculate the future exchange rates using the Monte Carlo method\nfuture_exchange_rates = spot_rate * np.exp((0 - 0.5 * volatility ** 2) * time_to_maturity + volatility * np.sqrt(time_to_maturity) * random_variables)\n\n# Calculate the mean and standard deviation of the future exchange rates\nmean_future_exchange_rate = np.mean(future_exchange_rates)\nstd_dev_future_exchange_rate = np.std(future_exchange_rates)\n\n# Print the results\nprint(f\"Mean future exchange rate: {mean_future_exchange_rate:.2f}\")\nprint(f\"Standard deviation of future exchange rates: {std_dev_future_exchange_rate:.2f}\")\n```"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 24672.1,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=calculation",
+      "[~] financial_data is null"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:59:24.066080+00:00"
+}

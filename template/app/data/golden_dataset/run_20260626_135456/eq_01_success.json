@@ -1,0 +1,45 @@
+{
+  "id": "eq_01",
+  "category": "equity_price",
+  "question": "Яка зараз ціна акцій NVIDIA (NVDA) і яке P/E?",
+  "expected_intent": "equity",
+  "expected_tools": [
+    "get_market_data"
+  ],
+  "notes": "Simple equity query.",
+  "job_id": "a8b2fe9d-00c3-47a0-95f3-ad94c15556b8",
+  "session_id": "0870684b-202e-4d6e-911d-bdff326d053f",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "```json\n{\n    \"name\": \"get_market_data\",\n    \"parameters\": {\n        \"ticker\": \"NVDA\"\n    }\n}\n```",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "Яка зараз ціна акцій NVIDIA (NVDA) і яке P/E?"
+    },
+    {
+      "role": "assistant",
+      "content": "```json\n{\n    \"name\": \"get_market_data\",\n    \"parameters\": {\n        \"ticker\": \"NVDA\"\n    }\n}\n```"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 9369.0,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=equity",
+      "[~] financial_data is null"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:57:05.856226+00:00"
+}

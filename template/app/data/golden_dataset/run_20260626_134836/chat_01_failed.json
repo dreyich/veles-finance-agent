@@ -1,0 +1,26 @@
+{
+  "id": "chat_01",
+  "category": "chat",
+  "question": "Привіт! Що ти вмієш робити?",
+  "expected_intent": "chat",
+  "expected_tools": [],
+  "notes": "Simple greeting. No tools needed.",
+  "job_id": "2abfb415-046f-4224-8dab-a40b84ea94c8",
+  "session_id": "52790861-5aab-4626-9234-5c066e75f4f7",
+  "status": "error",
+  "envelope": null,
+  "messages": null,
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 65498.1,
+  "grade": {
+    "passed": false,
+    "score": 0,
+    "reasons": [
+      "[FAIL] job status=error error='calculate_dcf'"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:49:45.705017+00:00"
+}

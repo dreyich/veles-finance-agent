@@ -1,0 +1,45 @@
+{
+  "id": "fx_03",
+  "category": "fx_cross",
+  "question": "Скільки коштує євро зараз відносно гривні?",
+  "expected_intent": "fx_rate",
+  "expected_tools": [
+    "get_fx_rates"
+  ],
+  "notes": "Cross-rate EUR/UAH.",
+  "job_id": "9b29ca92-f019-453f-94d6-dd74bd6933ec",
+  "session_id": "7fad139a-e86b-4d64-aef7-aa0af93ddd68",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "{\"name\": \"get_fx_rates\", \"parameters\": {\"base\": \"EUR\", \"pairs\": \"[\\\"UAH\\\"]\"}}",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "<PERSON> коштує євро зараз відносно гривні?"
+    },
+    {
+      "role": "assistant",
+      "content": "<thinking>\nTo get the current EUR/UAH rate, we need to call the get_fx_rates function with the base currency as EUR and the target currency as UAH.\n</thinking>\n<output>\n{\"name\": \"get_fx_rates\", \"parameters\": {\"base\": \"EUR\", \"pairs\": \"[\\\"UAH\\\"]\"}}\n</output>"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 12427.6,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=fx_rate",
+      "[~] financial_data is null"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:55:48.220847+00:00"
+}

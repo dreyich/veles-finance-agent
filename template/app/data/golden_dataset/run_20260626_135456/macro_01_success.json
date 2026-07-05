@@ -1,0 +1,44 @@
+{
+  "id": "macro_01",
+  "category": "macro_us",
+  "question": "Яка зараз ставка Федеральної резервної системи США і як це впливає на долар?",
+  "expected_intent": "macro",
+  "expected_tools": [
+    "get_us_macro_data"
+  ],
+  "notes": "US macro analysis.",
+  "job_id": "27c33344-1fd3-4804-bb1f-4f27564035b0",
+  "session_id": "f9067452-60a6-4cfd-8fba-b4a2f9d0df99",
+  "status": "done",
+  "envelope": {
+    "intent": "macro",
+    "text_response": "The Federal Reserve System, also known as the \"Fed,\" is the central bank of the United States and is responsible for setting monetary policy to promote maximum employment, stable prices, and moderate long-term interest rates. The Fed's actions can have a significant impact on the value of the US dollar, as they can influence interest rates, inflation, and economic growth.",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "Яка <PERSON> резервної системи США і як це впливає на долар?"
+    },
+    {
+      "role": "assistant",
+      "content": "<thinking>\nTo answer this question, we need to understand the current state of the US Federal Reserve System and its impact on the US dollar. The Federal Reserve, also known as the \"Fed,\" is the central bank of the United States and is responsible for setting monetary policy to promote maximum employment, stable prices, and moderate long-term interest rates.\n</thinking>\n<output>\n{\"intent\": \"macro\", \"text_response\": \"The Federal Reserve System, also known as the \\\"Fed,\\\" is the central bank of the United States and is responsible for setting monetary policy to promote maximum employment, stable prices, and moderate long-term interest rates. The Fed's actions can have a significant impact on the value of the US dollar, as they can influence interest rates, inflation, and economic growth.\", \"financial_data\": null}\n</output>"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 18525.1,
+  "grade": {
+    "passed": true,
+    "score": 75,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=macro)",
+      "[OK] intent matches (macro)"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:56:09.117197+00:00"
+}

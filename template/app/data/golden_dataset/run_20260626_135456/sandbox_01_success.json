@@ -1,0 +1,45 @@
+{
+  "id": "sandbox_01",
+  "category": "sandbox_kelly",
+  "question": "Яким має бути розмір позиції якщо ймовірність виграшу 60% і ризик/нагорода 2:1? Критерій Келлі.",
+  "expected_intent": "calculation",
+  "expected_tools": [
+    "kelly_criterion_calculator"
+  ],
+  "notes": "Kelly criterion.",
+  "job_id": "a1bc4874-ed18-437b-a4f9-6092384b7a9e",
+  "session_id": "495a443a-a386-4a6f-8f8e-898d438e6049",
+  "status": "done",
+  "envelope": {
+    "intent": "error",
+    "text_response": "Досягнуто ліміт інструментів для цього запиту. Будь ласка, перефразуйте або задайте конкретніше питання.",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "<PERSON> розмір позиції якщо ймовірність виграшу 60% і ризик/нагорода 2:1? Критерій Келлі."
+    },
+    {
+      "role": "assistant",
+      "content": "<output>{\"intent\":\"error\",\"text_response\":\"Досягнуто ліміт інструментів для цього запиту. Будь ласка, перефразуйте або задайте конкретніше питання.\",\"financial_data\":null,\"thinking_summary\":null}</output>"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 87938.8,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=error)",
+      "[~] intent mismatch: got=error expected=calculation",
+      "[~] financial_data is null"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:58:57.042974+00:00"
+}

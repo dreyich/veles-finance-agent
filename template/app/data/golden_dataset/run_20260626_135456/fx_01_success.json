@@ -1,0 +1,45 @@
+{
+  "id": "fx_01",
+  "category": "fx_current",
+  "question": "Який зараз офіційний курс долара НБУ?",
+  "expected_intent": "fx_rate",
+  "expected_tools": [
+    "get_fx_rates"
+  ],
+  "notes": "Simple current-rate query. Should call get_fx_rates, return rate 40-60.",
+  "job_id": "08a1b217-bba4-4cce-bd70-2b8bd072fd46",
+  "session_id": "5ec1d534-2c8b-4acd-a525-153c0acaff3e",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "```python\n\n```",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "Який <PERSON> курс долара НБУ?"
+    },
+    {
+      "role": "assistant",
+      "content": "```python\n<thinking>\nUkrainian query → USD/UAH. Calling get_fx_rates.\n</thinking>\n```"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 9437.7,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=fx_rate",
+      "[~] financial_data is null"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:55:08.990848+00:00"
+}

@@ -1,0 +1,26 @@
+{
+  "id": "chat_01",
+  "category": "chat",
+  "question": "Привіт! Що ти вмієш робити?",
+  "expected_intent": "chat",
+  "expected_tools": [],
+  "notes": "Simple greeting. No tools needed.",
+  "job_id": "ceda9c6c-0528-470b-8151-e4e653307f1f",
+  "session_id": "d70bd91c-8db6-4067-9120-6c5f5d122115",
+  "status": "error",
+  "envelope": null,
+  "messages": null,
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 5246.0,
+  "grade": {
+    "passed": false,
+    "score": 0,
+    "reasons": [
+      "[FAIL] job status=error error=failed to get llm response after trying all models: failed to get response from "
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:46:03.602721+00:00"
+}

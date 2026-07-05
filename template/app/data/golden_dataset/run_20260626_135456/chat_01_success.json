@@ -1,0 +1,38 @@
+{
+  "id": "chat_01",
+  "category": "chat",
+  "question": "Привіт! Що ти вмієш робити?",
+  "expected_intent": "chat",
+  "expected_tools": [],
+  "notes": "Simple greeting. No tools needed.",
+  "job_id": "8aaccc93-8f94-49f8-979d-74108b1fb7d5",
+  "session_id": "add7ee51-ae08-4908-85ae-7937efa33156",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "<LOCATION>! <PERSON> робити?",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "<LOCATION>! <PERSON> робити?"
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 97665.4,
+  "grade": {
+    "passed": true,
+    "score": 75,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[OK] intent matches (chat)"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T11:01:04.068579+00:00"
+}

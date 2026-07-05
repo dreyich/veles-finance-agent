@@ -1,0 +1,45 @@
+{
+  "id": "macro_02",
+  "category": "macro_yield",
+  "question": "Чи перевернута крива дохідності США? Що це означає для економіки?",
+  "expected_intent": "macro",
+  "expected_tools": [
+    "get_yield_curve",
+    "get_us_macro_data"
+  ],
+  "notes": "Yield curve inversion signal.",
+  "job_id": "224156ba-afde-48c1-a628-75a64c956ef8",
+  "session_id": "d815505e-ea6e-4360-870c-27713925fe39",
+  "status": "done",
+  "envelope": {
+    "intent": "chat",
+    "text_response": "The current yield curve in the US is not explicitly stated in the provided search results. However, the search results suggest that there have been instances of yield curve inversion in the past, and it is a topic of interest in the financial world.\n\nYield curve inversion occurs when the yield on short-term bonds is higher than the yield on long-term bonds. This can be a sign of a looming recession, as it indicates that investors are expecting lower interest rates in the future.\n\nTo determine if the yield curve is currently inverted, it would be necessary to check the current yields on US Treasury bonds of different maturities. This information is not provided in the search results, so it is not possible to say for certain whether the yield curve is currently inverted.\n\nIn general, a yield curve inversion can have significant implications for the economy and financial markets. It can indicate a slowdown in economic growth, and potentially even a recession. It can also affect the pricing of bonds and other financial instruments, as well as the overall direction of interest rates.\n\nTherefore, the final answer to the question of whether the yield curve is currently inverted in the US is that it is not possible to determine based on the provided search results. However, yield curve inversion is an important topic in the financial world, and it can have significant implications for the economy and financial markets.",
+    "financial_data": null,
+    "thinking_summary": null
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "Чи перевернута крива дохідності США? Що це означає <PERSON>?"
+    },
+    {
+      "role": "assistant",
+      "content": "The current yield curve in the US is not explicitly stated in the provided search results. However, the search results suggest that there have been instances of yield curve inversion in the past, and it is a topic of interest in the financial world.\n\nYield curve inversion occurs when the yield on short-term bonds is higher than the yield on long-term bonds. This can be a sign of a looming recession, as it indicates that investors are expecting lower interest rates in the future.\n\nTo determine if the yield curve is currently inverted, it would be necessary to check the current yields on US Treasury bonds of different maturities. This information is not provided in the search results, so it is not possible to say for certain whether the yield curve is currently inverted.\n\nIn general, a yield curve inversion can have significant implications for the economy and financial markets. It can indicate a slowdown in economic growth, and potentially even a recession. It can also affect the pricing of bonds and other financial instruments, as well as the overall direction of interest rates.\n\nTherefore, the final answer to the question of whether the yield curve is currently inverted in the US is that it is not possible to determine based on the provided search results. However, yield curve inversion is an important topic in the financial world, and it can have significant implications for the economy and financial markets."
+    }
+  ],
+  "worm_trace": [],
+  "token_stats": {},
+  "total_duration_ms": 42607.9,
+  "grade": {
+    "passed": true,
+    "score": 50,
+    "reasons": [
+      "[OK] job completed successfully",
+      "[OK] UniversalEnvelope parsed (intent=chat)",
+      "[~] intent mismatch: got=chat expected=macro"
+    ]
+  },
+  "quality_score": null,
+  "used_for_training": false,
+  "evaluated_at": "2026-06-26T10:56:54.121107+00:00"
+}

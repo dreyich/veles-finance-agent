@@ -1,0 +1,13 @@
+{
+  "id": "chat_01",
+  "question": "Привіт! Що ти вмієш робити?",
+  "status": "exception",
+  "error": "",
+  "grade": {
+    "passed": false,
+    "score": 0,
+    "reasons": [
+      "Exception: "
+    ]
+  }
+}

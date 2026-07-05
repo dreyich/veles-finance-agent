@@ -275,12 +275,16 @@ function ChatScreen() {
   const appendMsg = (id, m) =>
     setChats((cs) => cs.map((c) => c.id === id ? { ...c, msgs: [...c.msgs, m], ts: Date.now() } : c));
 
-  // RunPod distributes requests across several workers with no session
-  // affinity, so consecutive messages in the same chat can land on a
-  // different (cold) worker even right after a warm one just answered
-  // instantly. A single silent retry isn't always enough to route past
-  // that — allow a few attempts before actually bothering the user.
-  const MAX_AUTO_RETRIES = 3;
+  // With Max workers = 1 on RunPod, there's no longer "a different, already-
+  // warm worker" for a retry to land on — a network-layer failure is either
+  // (a) a fast connection-level rejection (worth one quick retry) or (b) the
+  // request was just slow and finally timed out on the client while the
+  // backend kept working (retrying a slow multi-tool-call request piles a
+  // second, equally slow, concurrent request onto the same single worker —
+  // actively harmful, not helpful). Only auto-retry when the failure came
+  // back fast, since that's the signature of (a), not (b).
+  const MAX_AUTO_RETRIES = 1;
+  const FAST_FAILURE_MS = 8000;
 
   const send = async (text, { retryCount = 0, chatId = null } = {}) => {
     // chatId is passed explicitly on the internal retry calls below instead
@@ -301,17 +305,17 @@ function ChatScreen() {
     setThinkingId(id);
     const ctrl = new AbortController();
     abortRef.current = ctrl;
+    const startedAt = Date.now();
     try {
       const reply = await askVeles(text, history, ctrl.signal);
       appendMsg(id, { role: "ai", text: reply });
     } catch (err) {
+      const failedFast = Date.now() - startedAt < FAST_FAILURE_MS;
       if (err.name === "AbortError") { /* user-cancelled, no message */ }
-      else if (err instanceof TypeError && retryCount < MAX_AUTO_RETRIES) {
-        // A network-layer failure (connection dropped mid-request) rather than
-        // an HTTP error response — this is what happens when a request lands
-        // on a worker that's cold or mid-restart. The backend has often
-        // actually finished the work by the time the client sees this, and a
-        // retry may simply route to a different, already-warm worker.
+      else if (err instanceof TypeError && retryCount < MAX_AUTO_RETRIES && failedFast) {
+        // A network-layer failure (connection dropped) that happened almost
+        // immediately — likely a transient connection hiccup, not a slow
+        // request timing out. Worth one quick silent retry.
         await send(text, { retryCount: retryCount + 1, chatId: id });
         return;
       } else if (err instanceof TypeError) {

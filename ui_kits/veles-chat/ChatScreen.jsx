@@ -118,7 +118,7 @@ function copyText(text) {
   return legacy();
 }
 
-function Bubble({ role, text, onRetry }) {
+function Bubble({ role, text, onRetry, retryDisabled }) {
   const [hov, setHov] = useState(false);
   const [copied, setCopied] = useState(false);
   const mobile = window.useVelesMobile();
@@ -161,13 +161,15 @@ function Bubble({ role, text, onRetry }) {
             whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{text}</div>
         )}
         {error && onRetry && (
-          <button onClick={onRetry}
+          <button onClick={onRetry} disabled={retryDisabled}
             style={{ marginTop: 8, display: "inline-flex", alignItems: "center", gap: 6, padding: "5px 11px",
-              borderRadius: 8, border: "1px solid rgba(194,69,60,0.25)", cursor: "pointer",
+              borderRadius: 8, border: "1px solid rgba(194,69,60,0.25)",
+              cursor: retryDisabled ? "default" : "pointer",
+              opacity: retryDisabled ? 0.5 : 1,
               fontSize: 12.5, fontWeight: 550, color: "#a03f37",
               background: "rgba(194,69,60,0.06)" }}>
             <i data-lucide="rotate-cw" style={{ width: 12, height: 12 }}></i>
-            Try again
+            {retryDisabled ? "Retrying…" : "Try again"}
           </button>
         )}
         {!error && (
@@ -427,7 +429,7 @@ function ChatScreen() {
             padding: mobile ? "12px 14px 150px" : "14px 26px 170px",
             display: "flex", flexDirection: "column", gap: mobile ? 16 : 20 }}>
             {msgs.map((m, i) => (
-              <Bubble key={i} role={m.role} text={m.text}
+              <Bubble key={i} role={m.role} text={m.text} retryDisabled={thinkingHere}
                 onRetry={m.retryText ? () => send(m.retryText, { retryCount: 1, chatId: activeId }) : null} />
             ))}
             {thinkingHere && <window.VelesThinking type={thinkType} />}

@@ -70,7 +70,8 @@ Rules:
 - For "find me stocks" or screening: use screen_stocks
 - For currency/exchange rate questions (курс долара, євро, злотого etc.): use
   get_fx_rate with the 3-letter ISO code (USD, EUR, PLN...). Never call
-  get_market_data with a currency code as the ticker — it's for stocks only.
+  get_market_data with a currency code or FX pair as the ticker (e.g. "USD",
+  "USDUAH") — get_market_data is for company stocks only (AAPL, MSFT, TSLA).
 - For stock analysis: use get_market_data first, then due_diligence_report if needed
 - For deep fundamental analysis: use fetch_sec_10k_tool
 - A tool's raw output is a REPORT, not a hint. Your final answer must carry

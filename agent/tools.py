@@ -8,6 +8,45 @@ from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_
 
 _NBU_URL = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange"
 
+# ISO codes NBU actually publishes a rate for — used to catch cases where the
+# orchestrator passes a currency code (or FX pair like "USDUAH") into
+# get_market_data instead of calling get_fx_rate, despite the system prompt
+# telling it not to. Small orchestrator models don't always follow that rule,
+# so this redirects at the tool level instead of trusting instruction-following.
+_KNOWN_CURRENCY_CODES = {
+    "USD", "EUR", "GBP", "PLN", "CHF", "JPY", "CAD", "AUD", "CNY", "CZK",
+    "HUF", "TRY", "SEK", "NOK", "DKK", "ILS", "GEL", "KZT",
+}
+
+
+def _fetch_nbu_rate(code: str) -> str:
+    try:
+        resp = httpx.get(_NBU_URL, params={"valcode": code, "json": ""}, timeout=10.0)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as exc:
+        return f"Error fetching FX rate for {code}: {exc}"
+
+    if not data:
+        return f"No NBU rate found for currency code '{code}'. Check the code is a valid 3-letter ISO code (e.g. USD, EUR, PLN)."
+
+    entry = data[0]
+    return (
+        f"NBU official rate — {entry.get('txt', code)} ({code}): "
+        f"{entry['rate']:.4f} UAH as of {entry.get('exchangedate', 'today')}"
+    )
+
+
+def _as_currency_redirect(ticker: str) -> str | None:
+    """Return an NBU rate string if `ticker` looks like a currency code or FX
+    pair rather than a stock ticker, else None."""
+    if ticker in _KNOWN_CURRENCY_CODES:
+        return _fetch_nbu_rate(ticker)
+    if len(ticker) == 6 and ticker[:3] in _KNOWN_CURRENCY_CODES:
+        return _fetch_nbu_rate(ticker[:3])
+    return None
+
+
 _MARKET_CAP_LABELS = [(1_000_000_000_000, "T"), (1_000_000_000, "B"), (1_000_000, "M")]
 
 def _fmt_cap(v):
@@ -25,11 +64,36 @@ def _fmt_ratio(v, d=2): return f"{v:.{d}f}" if v is not None else "N/A"
 def get_market_data(ticker: str) -> str:
     """Fetch live stock price, fundamentals, and recent news for any ticker symbol."""
     ticker = ticker.strip().upper()
+
+    redirect = _as_currency_redirect(ticker)
+    if redirect is not None:
+        return redirect
+
     try:
         t = yf.Ticker(ticker)
         info = yf_with_retry(lambda: t.info) or {}
     except Exception as exc:
-        return f"Error fetching data for {ticker}: {exc}"
+        # Yahoo's full quoteSummary endpoint (behind .info) rate-limits harder
+        # than fast_info's lighter endpoint. fast_info won't have fundamentals
+        # (P/E, margin, etc.) but at least returns price when .info is blocked.
+        try:
+            fi = t.fast_info
+            price = fi.get("lastPrice")
+            prev = fi.get("previousClose")
+            if price is None:
+                raise exc
+            change = ""
+            if prev:
+                delta = price - prev
+                pct = (delta / prev) * 100
+                sign = "+" if delta >= 0 else ""
+                change = f"  Change: {sign}{delta:.2f} ({sign}{pct:.2f}%)"
+            return (
+                f"Market Data — {ticker} (partial — fundamentals unavailable, Yahoo rate-limited)\n"
+                f"Price: {_fmt_price(price)}{change}"
+            )
+        except Exception:
+            return f"Error fetching data for {ticker}: {exc}"
 
     # News is a nice-to-have — a Yahoo rate limit on this call alone
     # shouldn't discard the price/fundamentals we already fetched above.

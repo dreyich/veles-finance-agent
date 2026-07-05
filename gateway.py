@@ -54,14 +54,31 @@ _WEB_AGENT_RATE_LIMIT = 30
 _WEB_AGENT_RATE_WINDOW_SEC = 3600
 _web_agent_calls: dict[str, list[float]] = defaultdict(list)
 
+# Global daily budget cap across ALL callers, independent of IP. The per-IP
+# limit above only bounds a single source — it does nothing if the leaked
+# secret is used from many different IPs (posted publicly, or replayed by a
+# botnet), since each IP gets its own fresh bucket of 30/hour. This caps the
+# worst-case RunPod cost exposure regardless of how distributed the abuse is.
+# In-memory/per-machine like the per-IP limiter above, for the same reason.
+_WEB_AGENT_GLOBAL_DAILY_CAP = int(os.getenv("WEB_AGENT_GLOBAL_DAILY_CAP", "500"))
+_WEB_AGENT_GLOBAL_WINDOW_SEC = 86400
+_web_agent_global_calls: list[float] = []
+
 
 def _web_agent_rate_limited(client_ip: str) -> bool:
     now = time.time()
+
+    _web_agent_global_calls[:] = [t for t in _web_agent_global_calls if now - t < _WEB_AGENT_GLOBAL_WINDOW_SEC]
+    if len(_web_agent_global_calls) >= _WEB_AGENT_GLOBAL_DAILY_CAP:
+        return True
+
     calls = _web_agent_calls[client_ip]
     calls[:] = [t for t in calls if now - t < _WEB_AGENT_RATE_WINDOW_SEC]
     if len(calls) >= _WEB_AGENT_RATE_LIMIT:
         return True
+
     calls.append(now)
+    _web_agent_global_calls.append(now)
     return False
 
 

@@ -29,8 +29,37 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: python tests_orchestrator.py
 
+  regression-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: template
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # GPU-independent regression suite — runs on every push, no model weights
+      # or running server needed. This does NOT replace eval_v6.py (accuracy of
+      # the fine-tuned model itself): that script loads the 7B checkpoint via
+      # unsloth/CUDA and cannot run on a standard GitHub-hosted runner. Until a
+      # GPU-capable runner is wired up, eval_v6.py stays a manual gate — run it
+      # by hand on the training GPU box before promoting a new adapter version,
+      # per RELEASE_CHECKLIST.md.
+      - name: Run token efficiency + tool registry regression
+        run: uv run python test_token_efficiency.py
+
+      - name: Run S3 WORM audit trail regression (moto-mocked, no AWS needed)
+        run: uv run python test_s3_audit.py
+
   build-and-push:
-    needs: eval-orchestrator
+    needs: [eval-orchestrator, regression-tests]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

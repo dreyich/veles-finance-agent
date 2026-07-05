@@ -18,18 +18,31 @@ def _finnhub_quote(ticker: str) -> str | None:
     Returns None if no FINNHUB_API_KEY is configured or the call fails, so
     callers can fall through to the generic error message."""
     if not FINNHUB_API_KEY:
+        print(f"finnhub_skipped_no_key ticker={ticker}")
         return None
     try:
-        resp = httpx.get(_FINNHUB_URL, params={"symbol": ticker, "token": FINNHUB_API_KEY}, timeout=10.0)
+        # Finnhub compresses responses with zstd by default; the zstandard
+        # decoder in this environment fails on it ("Allocation error: not
+        # enough memory") even for a tiny JSON payload. Requesting gzip
+        # instead avoids that decode path entirely.
+        resp = httpx.get(
+            _FINNHUB_URL,
+            params={"symbol": ticker, "token": FINNHUB_API_KEY},
+            headers={"Accept-Encoding": "gzip, deflate"},
+            timeout=10.0,
+        )
         resp.raise_for_status()
         data = resp.json()
-    except Exception:
+    except Exception as exc:
+        print(f"finnhub_call_failed ticker={ticker} error={exc}")
         return None
 
     price = data.get("c")  # current price
     prev = data.get("pc")  # previous close
     if not price:
+        print(f"finnhub_no_price ticker={ticker} data={data}")
         return None
+    print(f"finnhub_success ticker={ticker} price={price}")
 
     change = ""
     if prev:
@@ -123,8 +136,8 @@ def get_market_data(ticker: str) -> str:
                 f"Market Data — {ticker} (partial — fundamentals unavailable, Yahoo rate-limited)\n"
                 f"Price: {_fmt_price(price)}{change}"
             )
-        except Exception:
-            pass
+        except Exception as fi_exc:
+            print(f"fast_info_fallback_failed ticker={ticker} error={fi_exc}")
 
         finnhub_result = _finnhub_quote(ticker)
         if finnhub_result:

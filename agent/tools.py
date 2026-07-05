@@ -1,9 +1,12 @@
 from __future__ import annotations
 from datetime import datetime
+import httpx
 import yfinance as yf
 from langchain_core.tools import tool
 from .sec_tool import fetch_sec_10k_tool
 from .trader_tools import compare_annual_reports, get_earnings_calendar, screen_stocks, yf_with_retry
+
+_NBU_URL = "https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange"
 
 _MARKET_CAP_LABELS = [(1_000_000_000_000, "T"), (1_000_000_000, "B"), (1_000_000, "M")]
 
@@ -25,9 +28,15 @@ def get_market_data(ticker: str) -> str:
     try:
         t = yf.Ticker(ticker)
         info = yf_with_retry(lambda: t.info) or {}
-        news = yf_with_retry(lambda: t.news) or []
     except Exception as exc:
         return f"Error fetching data for {ticker}: {exc}"
+
+    # News is a nice-to-have — a Yahoo rate limit on this call alone
+    # shouldn't discard the price/fundamentals we already fetched above.
+    try:
+        news = yf_with_retry(lambda: t.news) or []
+    except Exception:
+        news = []
 
     company = info.get("longName") or info.get("shortName") or ticker
     price = info.get("currentPrice") or info.get("regularMarketPrice")
@@ -71,6 +80,31 @@ Recent News:
 {chr(10).join(news_lines) if news_lines else '  No recent news.'}
 ═══════════════════════════════════════════════════════
 """.strip()
+
+
+@tool
+def get_fx_rate(currency: str) -> str:
+    """Fetch the official NBU (National Bank of Ukraine) exchange rate for a currency vs UAH.
+
+    Args:
+        currency: 3-letter ISO currency code, e.g. 'USD', 'EUR', 'PLN', 'GBP'
+    """
+    code = currency.strip().upper()
+    try:
+        resp = httpx.get(_NBU_URL, params={"valcode": code, "json": ""}, timeout=10.0)
+        resp.raise_for_status()
+        data = resp.json()
+    except Exception as exc:
+        return f"Error fetching FX rate for {code}: {exc}"
+
+    if not data:
+        return f"No NBU rate found for currency code '{code}'. Check the code is a valid 3-letter ISO code (e.g. USD, EUR, PLN)."
+
+    entry = data[0]
+    return (
+        f"NBU official rate — {entry.get('txt', code)} ({code}): "
+        f"{entry['rate']:.4f} UAH as of {entry.get('exchangedate', 'today')}"
+    )
 
 
 _THRESHOLDS = {
@@ -235,4 +269,5 @@ TOOLS = [
     compare_annual_reports,
     get_earnings_calendar,
     screen_stocks,
+    get_fx_rate,
 ]

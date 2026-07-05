@@ -18,7 +18,7 @@ from .sec_tool import _get_cik, HEADERS
 _BASE = "https://data.sec.gov"
 
 
-def yf_with_retry(fn, retries: int = 3, base_delay: float = 1.5):
+def yf_with_retry(fn, retries: int = 5, base_delay: float = 2.0):
     """Run a yfinance call with exponential backoff on transient errors (Yahoo 429 rate limits)."""
     last_exc = None
     for attempt in range(retries):

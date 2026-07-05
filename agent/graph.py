@@ -49,6 +49,7 @@ You have access to these tools:
 - compare_annual_reports: Year-over-year 10-K comparison — what changed vs last year
 - get_earnings_calendar: Next earnings date + analyst EPS/revenue estimates
 - screen_stocks: Screen stocks in a sector by P/E, beta, and profit margin
+- get_fx_rate: Official NBU exchange rate for a currency vs UAH (e.g. USD, EUR, PLN)
 
 Rules:
 - Always use tools to get real data before answering financial questions
@@ -67,6 +68,9 @@ Rules:
 - For "what changed" or trend questions: use compare_annual_reports
 - For earnings timing questions: use get_earnings_calendar
 - For "find me stocks" or screening: use screen_stocks
+- For currency/exchange rate questions (курс долара, євро, злотого etc.): use
+  get_fx_rate with the 3-letter ISO code (USD, EUR, PLN...). Never call
+  get_market_data with a currency code as the ticker — it's for stocks only.
 - For stock analysis: use get_market_data first, then due_diligence_report if needed
 - For deep fundamental analysis: use fetch_sec_10k_tool
 - A tool's raw output is a REPORT, not a hint. Your final answer must carry

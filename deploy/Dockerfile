@@ -21,6 +21,12 @@
 # source), so we still need the prebuilt wheel via --find-links.
 FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
+# Without this, Python block-buffers stdout when it isn't a TTY (i.e. always,
+# in a container) — print()/logger output can sit unflushed instead of
+# reaching RunPod's log capture, which cost real debugging time chasing a
+# Finnhub fallback bug where the diagnostic prints simply weren't appearing.
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl libnuma1 && rm -rf /var/lib/apt/lists/*

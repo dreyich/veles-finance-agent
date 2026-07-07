@@ -64,14 +64,15 @@ function Composer({ onSend, onStop, thinking, empty }) {
             fontSize: mobile ? 16 : 15, lineHeight: 1.55,
             padding: "2px 4px", minHeight: 24, maxHeight: 168 }} />
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 11px 4px 5px",
-            borderRadius: 999, background: "rgba(27,36,49,0.05)", border: "1px solid rgba(27,36,49,0.06)",
-            color: "var(--ink-2)", fontSize: 12, fontWeight: 500 }}>
-            <span aria-hidden="true" style={{ width: 18, height: 18, borderRadius: 6, flexShrink: 0,
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "3px 12px 3px 4px",
+            borderRadius: 999, background: "rgba(27,36,49,0.05)", border: "1px solid rgba(27,36,49,0.07)",
+            color: "var(--ink-2)", fontSize: 12, fontWeight: 500, letterSpacing: "-0.005em" }}>
+            <span aria-hidden="true" style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
               background: "linear-gradient(145deg,#2a3950,#151d2a)",
-              boxShadow: "0 1px 3px rgba(21,29,42,0.30), inset 0 1px 0 rgba(255,255,255,0.18)",
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontWeight: 650, fontSize: 9.5 }}>V</span>
+              boxShadow: "0 1px 3px rgba(21,29,42,0.32), inset 0 1px 0 rgba(255,255,255,0.20)",
+              display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+              <img src="/ui_kits/veles-chat/assets/logo-mark.svg" alt="" style={{ height: 11, width: "auto", filter: "invert(1)", display: "block" }} />
+            </span>
             Veles · Financial analyst
           </span>
           <button onClick={thinking ? onStop : send}
@@ -83,9 +84,14 @@ function Composer({ onSend, onStop, thinking, empty }) {
               transition: "transform .18s var(--ease-soft), background .25s" }}
             onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.06)"; }}
             onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}>
-            <i data-lucide={thinking ? "square" : "arrow-up"}
-              style={{ width: thinking ? 13 : 17, height: thinking ? 13 : 17, color: "#fff",
-                fill: thinking ? "#fff" : "none" }}></i>
+            {thinking ? (
+              <span aria-hidden="true" style={{ width: 12, height: 12, borderRadius: 3.5, background: "#fff", display: "block" }} />
+            ) : (
+              <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none"
+                stroke="#fff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 19V5M5 12l7-7 7 7" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
@@ -443,12 +449,9 @@ function ChatScreen() {
           opacity: empty ? 1 : 0, transform: empty ? "translateY(0)" : "translateY(-16px)",
           transition: "opacity .4s var(--ease-soft), transform .5s var(--ease-soft)",
           pointerEvents: "none" }}>
-          <span style={{ width: 44, height: 44, borderRadius: 13,
-            background: "linear-gradient(145deg,#2a3950,#151d2a)",
-            boxShadow: "0 8px 22px rgba(21,29,42,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            color: "#fff", fontWeight: 650, fontSize: 19, marginBottom: 6 }}>V</span>
-          <div style={{ fontSize: mobile ? 22 : 26, fontWeight: 650, letterSpacing: "-0.022em", color: "var(--ink-1)" }}>
+          <img src="/ui_kits/veles-chat/assets/logo-full.svg" alt="Veles" style={{ height: 34, width: "auto", marginBottom: 10 }} />
+          <div style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontOpticalSizing: "auto",
+            fontSize: mobile ? 26 : 32, fontWeight: 480, letterSpacing: "-0.012em", color: "var(--ink-1)" }}>
             {greeting()}
           </div>
           <div style={{ fontSize: mobile ? 13 : 14, color: "var(--ink-2)", maxWidth: 420, lineHeight: 1.5 }}>

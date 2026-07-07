@@ -8,11 +8,12 @@
 <title>Veles — Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&family=Fraunces:ital,opsz,wght@0,9..144,340..600;1,9..144,340..600&display=swap" />
 <style>
   @property --rainbow-angle{syntax:'<angle>';inherits:true;initial-value:0deg}
   :root{
     --font-sans:'Inter',ui-sans-serif,system-ui,'Segoe UI',sans-serif;
+    --font-serif:'Fraunces',ui-serif,Georgia,serif;
     --font-mono:ui-monospace,'Cascadia Mono','SF Mono',Consolas,monospace;
     --ink-1:#1b2431;
     --ink-2:#4e5d72;
@@ -21,7 +22,7 @@
     --text-secondary:var(--ink-2);
     --text-tertiary:var(--ink-3);
     --hair:rgba(27,36,49,0.08);
-    --accent:#3776e0;
+    --accent:#b5563a;
     --panel:rgba(255,255,255,0.62);
     --ease-soft:cubic-bezier(0.32,0.72,0,1);
     --dur-med:.45s;
@@ -33,7 +34,7 @@
     font-optical-sizing:auto;
     letter-spacing:-0.01em;
     color:var(--ink-1);
-    background:#c9dff2;
+    background:#ece6d8;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
     text-rendering:optimizeLegibility;
@@ -45,17 +46,17 @@
   *::-webkit-scrollbar{width:8px;height:8px}
   *::-webkit-scrollbar-thumb{background:rgba(27,36,49,0.16);border-radius:8px}
   *::-webkit-scrollbar-track{background:transparent}
-  ::selection{background:rgba(55,118,224,0.18)}
-  :focus-visible{outline:2px solid rgba(55,118,224,0.55);outline-offset:2px;border-radius:6px}
+  ::selection{background:rgba(181,86,58,0.18)}
+  :focus-visible{outline:2px solid rgba(181,86,58,0.55);outline-offset:2px;border-radius:6px}
 
   /* ---- Morning-sky backdrop ---- */
   .veles-sky{
     position:absolute;inset:0;
-    background:linear-gradient(180deg,#aecdea 0%,#c6ddf1 34%,#ddebf7 66%,#eef5fb 100%);
+    background:linear-gradient(180deg,#e3dac4 0%,#eae2cf 34%,#f2ece0 66%,#faf7f1 100%);
   }
   .veles-cloud{
     position:absolute;border-radius:50%;pointer-events:none;
-    background:radial-gradient(closest-side,rgba(255,255,255,0.95),rgba(255,255,255,0));
+    background:radial-gradient(closest-side,rgba(255,253,247,0.95),rgba(255,253,247,0));
     filter:blur(26px);
   }
   .veles-cloud.c1{width:56vw;height:24vh;left:-8vw;top:8vh;animation:veles-drift 80s ease-in-out infinite alternate}
@@ -84,11 +85,11 @@
   .v-md li{margin:3px 0}
   .v-md li>p{margin:0}
   .v-md strong{font-weight:620}
-  .v-md a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(55,118,224,0.30)}
+  .v-md a{color:var(--accent);text-decoration:none;border-bottom:1px solid rgba(181,86,58,0.30)}
   .v-md code{font-family:var(--font-mono);font-size:12.5px;background:rgba(27,36,49,0.06);border:1px solid rgba(27,36,49,0.05);border-radius:5px;padding:1.5px 5px}
   .v-md pre{background:rgba(27,36,49,0.05);border:1px solid rgba(27,36,49,0.06);border-radius:12px;padding:12px 14px;overflow-x:auto;margin:0 0 12px}
   .v-md pre code{background:transparent;border:none;padding:0;font-size:12.5px;line-height:1.6}
-  .v-md blockquote{margin:0 0 10px;padding:2px 0 2px 12px;border-left:2.5px solid rgba(55,118,224,0.40);color:var(--ink-2)}
+  .v-md blockquote{margin:0 0 10px;padding:2px 0 2px 12px;border-left:2.5px solid rgba(181,86,58,0.40);color:var(--ink-2)}
   .v-md table{border-collapse:collapse;margin:4px 0 12px;font-size:13.5px;display:block;overflow-x:auto;max-width:100%}
   .v-md th,.v-md td{border:1px solid rgba(27,36,49,0.10);padding:6.5px 11px;text-align:left;vertical-align:top}
   .v-md th{background:rgba(27,36,49,0.045);font-weight:600;font-size:12.5px;white-space:nowrap}
@@ -114,9 +115,9 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-<script type="text/babel" src="/ui_kits/veles-chat/Sidebar.jsx?v=11" data-presets="react"></script>
-<script type="text/babel" src="/ui_kits/veles-chat/ThinkingViz.jsx?v=11" data-presets="react"></script>
-<script type="text/babel" src="/ui_kits/veles-chat/ChatScreen.jsx?v=11" data-presets="react"></script>
+<script type="text/babel" src="/ui_kits/veles-chat/Sidebar.jsx?v=13" data-presets="react"></script>
+<script type="text/babel" src="/ui_kits/veles-chat/ThinkingViz.jsx?v=13" data-presets="react"></script>
+<script type="text/babel" src="/ui_kits/veles-chat/ChatScreen.jsx?v=13" data-presets="react"></script>
 <script type="text/babel" data-presets="react">
   function App(){
     React.useEffect(()=>{ if(window.lucide) window.lucide.createIcons(); },[]);

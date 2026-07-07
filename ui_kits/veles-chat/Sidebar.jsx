@@ -259,11 +259,12 @@ function VelesSettingsModal({ chats, onClearAll, onClose }) {
                 <span style={{ width: 42, height: 42, borderRadius: 13, flexShrink: 0,
                   background: "linear-gradient(145deg,#2a3950,#151d2a)",
                   boxShadow: "0 6px 18px rgba(21,29,42,0.32), inset 0 1px 0 rgba(255,255,255,0.18)",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  color: "#fff", fontWeight: 650, fontSize: 18 }}>V</span>
+                  display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                  <img src="/ui_kits/veles-chat/assets/logo-mark.svg" alt="" style={{ height: 21, width: "auto", filter: "invert(1)" }} />
+                </span>
                 <div>
-                  <div style={{ fontSize: 14.5, fontWeight: 620, letterSpacing: "-0.015em", color: "var(--ink-1)" }}>Veles</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 2 }}>Financial analyst · v2.1.0</div>
+                  <img src="/ui_kits/veles-chat/assets/logo-full.svg" alt="Veles" style={{ height: 16, width: "auto", display: "block" }} />
+                  <div style={{ fontSize: 12, color: "var(--ink-3)", marginTop: 4 }}>Financial analyst · v2.1.0</div>
                 </div>
               </div>
               <div style={{ height: 1, background: "var(--hair)" }} />
@@ -385,12 +386,7 @@ function VelesSidebar({ chats = [], activeId, onSelect, onNew, onDelete, onRenam
 
       {/* workspace row */}
       <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "0 4px 2px" }}>
-        <span style={{ width: 26, height: 26, borderRadius: 8.5, flexShrink: 0,
-          background: "linear-gradient(145deg,#2a3950,#151d2a)",
-          boxShadow: "0 2px 6px rgba(21,29,42,0.35), inset 0 1px 0 rgba(255,255,255,0.18)",
-          display: "inline-flex", alignItems: "center", justifyContent: "center",
-          color: "#fff", fontWeight: 650, fontSize: 12.5 }}>V</span>
-        <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: "-0.012em" }}>Veles</span>
+        <img src="/ui_kits/veles-chat/assets/logo-full.svg" alt="Veles" style={{ height: 22, width: "auto", display: "block" }} />
         <span style={{ flex: 1 }} />
         <SbIconBtn icon="search" label="Search chats" active={searchOn}
           onClick={() => { setSearchOn((v) => !v); setQ(""); }} />

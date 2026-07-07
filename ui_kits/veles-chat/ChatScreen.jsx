@@ -12,13 +12,6 @@ function uid() {
   return (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
     : Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 }
-function greeting() {
-  const h = new Date().getHours();
-  if (h < 5) return "Working late?";
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
 function timeAgo(ts) {
   const s = Math.max(1, Math.round((Date.now() - ts) / 1000));
   if (s < 60) return "just now";
@@ -449,11 +442,7 @@ function ChatScreen() {
           opacity: empty ? 1 : 0, transform: empty ? "translateY(0)" : "translateY(-16px)",
           transition: "opacity .4s var(--ease-soft), transform .5s var(--ease-soft)",
           pointerEvents: "none" }}>
-          <img src="/ui_kits/veles-chat/assets/logo-full.svg" alt="Veles" style={{ height: 34, width: "auto", marginBottom: 10 }} />
-          <div style={{ fontFamily: "var(--font-serif)", fontStyle: "italic", fontOpticalSizing: "auto",
-            fontSize: mobile ? 26 : 32, fontWeight: 480, letterSpacing: "-0.012em", color: "var(--ink-1)" }}>
-            {greeting()}
-          </div>
+          <img src="/ui_kits/veles-chat/assets/logo-full.svg" alt="Veles" style={{ height: 38, width: "auto", marginBottom: 14 }} />
           <div style={{ fontSize: mobile ? 13 : 14, color: "var(--ink-2)", maxWidth: 420, lineHeight: 1.5 }}>
             Ask about filings, valuations or risk — Veles reads the documents for you.
           </div>

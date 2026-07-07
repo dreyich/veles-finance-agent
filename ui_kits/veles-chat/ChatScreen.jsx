@@ -56,18 +56,7 @@ function Composer({ onSend, onStop, thinking, empty }) {
             background: "transparent", color: "var(--ink-1)",
             fontSize: mobile ? 16 : 15, lineHeight: 1.55,
             padding: "2px 4px", minHeight: 24, maxHeight: 168 }} />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "3px 12px 3px 4px",
-            borderRadius: 999, background: "rgba(27,36,49,0.05)", border: "1px solid rgba(27,36,49,0.07)",
-            color: "var(--ink-2)", fontSize: 12, fontWeight: 500, letterSpacing: "-0.005em" }}>
-            <span aria-hidden="true" style={{ width: 20, height: 20, borderRadius: "50%", flexShrink: 0,
-              background: "linear-gradient(145deg,#2a3950,#151d2a)",
-              boxShadow: "0 1px 3px rgba(21,29,42,0.32), inset 0 1px 0 rgba(255,255,255,0.20)",
-              display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
-              <img src="/ui_kits/veles-chat/assets/logo-mark.svg" alt="" style={{ height: 11, width: "auto", filter: "invert(1)", display: "block" }} />
-            </span>
-            Veles · Financial analyst
-          </span>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", marginTop: 10 }}>
           <button onClick={thinking ? onStop : send}
             aria-label={thinking ? "Stop generating" : "Send"} title={thinking ? "Stop generating" : "Send"}
             style={{ width: 38, height: 38, borderRadius: 999, border: "none", cursor: "pointer",

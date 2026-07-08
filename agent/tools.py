@@ -215,9 +215,7 @@ def _price_fallback(t, ticker: str) -> str | None:
     return _finnhub_quote(ticker)
 
 
-@tool
-def get_market_data(ticker: str) -> str:
-    """Fetch live stock price, fundamentals, and recent news for any ticker symbol."""
+def _get_market_data_one(ticker: str) -> str:
     ticker = ticker.strip().upper()
 
     redirect = _as_currency_redirect(ticker)
@@ -299,28 +297,76 @@ Recent News:
 
 
 @tool
-def get_fx_rate(currency: str) -> str:
-    """Fetch the official NBU (National Bank of Ukraine) exchange rate for a currency vs UAH.
+def get_market_data(tickers: str) -> str:
+    """Fetch live stock price, fundamentals, and recent news for one or more ticker symbols.
 
     Args:
-        currency: 3-letter ISO currency code, e.g. 'USD', 'EUR', 'PLN', 'GBP'
+        tickers: One ticker, or multiple comma-separated tickers to cover every
+            company in the request in a single call (e.g. 'AAPL' or
+            'AAPL,MSFT,GOOGL'). Always pass every ticker needed at once —
+            never call this tool separately for each ticker in a comparison.
     """
-    code = currency.strip().upper()
-    try:
-        resp = httpx.get(_NBU_URL, params={"valcode": code, "json": ""}, timeout=10.0)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as exc:
-        return f"Error fetching FX rate for {code}: {exc}"
+    symbols = [s.strip().upper() for s in tickers.split(",") if s.strip()]
+    if not symbols:
+        return "No ticker provided."
+    return "\n\n".join(_get_market_data_one(sym) for sym in symbols)
 
-    if not data:
-        return f"No NBU rate found for currency code '{code}'. Check the code is a valid 3-letter ISO code (e.g. USD, EUR, PLN)."
 
-    entry = data[0]
-    return (
-        f"NBU official rate — {entry.get('txt', code)} ({code}): "
-        f"{entry['rate']:.4f} UAH as of {entry.get('exchangedate', 'today')}"
-    )
+@tool
+def get_fx_rate(currency_pair: str) -> str:
+    """Fetch exchange rates: either vs UAH from NBU, or cross-currency pairs from Yahoo Finance.
+
+    Args:
+        currency_pair: Either a single currency code (e.g. 'USD', 'EUR') for rate vs UAH,
+                      or a pair like 'USD/EUR', 'EUR/USD' for cross-currency rates
+    """
+    pair = currency_pair.strip().upper()
+
+    # Check if it's a cross-currency pair (USD/EUR, EUR/USD, etc.)
+    if "/" in pair:
+        parts = pair.split("/")
+        if len(parts) != 2:
+            return f"Invalid currency pair format: '{pair}'. Use format like 'USD/EUR' or single code like 'USD'."
+
+        base, quote = parts[0].strip(), parts[1].strip()
+
+        # If quote is UAH, use NBU
+        if quote == "UAH":
+            return _fetch_nbu_rate(base)
+
+        # Otherwise use Yahoo Finance FX pair
+        # Yahoo format: base+quote+"=X" (e.g. EURUSD=X for EUR/USD)
+        yahoo_symbol = f"{base}{quote}=X"
+        try:
+            ticker = yf.Ticker(yahoo_symbol)
+            info = yf_with_retry(lambda: ticker.info) or {}
+            price = info.get("regularMarketPrice") or info.get("bid")
+
+            if price is None:
+                # Try fast_info as fallback
+                try:
+                    price = ticker.fast_info.get("lastPrice")
+                except Exception:
+                    pass
+
+            if price is None:
+                return f"No exchange rate data available for {base}/{quote}. Check currency codes are valid."
+
+            prev = info.get("regularMarketPreviousClose")
+            change = ""
+            if prev:
+                delta = price - prev
+                pct = (delta / prev) * 100
+                sign = "+" if delta >= 0 else ""
+                change = f"  Change: {sign}{delta:.4f} ({sign}{pct:.2f}%)"
+
+            return f"Exchange rate — {base}/{quote}: {price:.4f}{change}"
+
+        except Exception as exc:
+            return f"Error fetching FX rate for {base}/{quote}: {exc}"
+
+    # Single currency code - get rate vs UAH from NBU
+    return _fetch_nbu_rate(pair)
 
 
 _THRESHOLDS = {
@@ -330,14 +376,7 @@ _THRESHOLDS = {
 }
 
 
-@tool
-def due_diligence_report(ticker: str, risk_profile: str) -> str:
-    """Generate an institutional Due Diligence report with APPROVED or REJECTED verdict.
-
-    Args:
-        ticker: Stock ticker symbol (e.g. 'NVDA', 'AAPL')
-        risk_profile: One of 'conservative', 'moderate', or 'aggressive'
-    """
+def _due_diligence_one(ticker: str, risk_profile: str) -> str:
     ticker = ticker.strip().upper()
     profile = risk_profile.lower()
     thresholds = _THRESHOLDS.get(profile, _THRESHOLDS["moderate"])
@@ -443,6 +482,22 @@ def due_diligence_report(ticker: str, risk_profile: str) -> str:
 
 
 @tool
+def due_diligence_report(tickers: str, risk_profile: str) -> str:
+    """Generate an institutional Due Diligence report with APPROVED or REJECTED verdict.
+
+    Args:
+        tickers: One ticker, or multiple comma-separated tickers to screen in
+            a single call (e.g. 'NVDA' or 'NVDA,AAPL'). Always pass every
+            ticker needed at once — never call this tool separately per ticker.
+        risk_profile: One of 'conservative', 'moderate', or 'aggressive'
+    """
+    symbols = [s.strip().upper() for s in tickers.split(",") if s.strip()]
+    if not symbols:
+        return "No ticker provided."
+    return "\n\n".join(_due_diligence_one(sym, risk_profile) for sym in symbols)
+
+
+@tool
 def kelly_position_size(win_probability: float, payout_ratio: float) -> str:
     """Calculate optimal position size using the Kelly Criterion.
 
@@ -485,6 +540,96 @@ Optimal Position Sizing:
 """.strip()
 
 
+@tool
+def web_search(query: str) -> str:
+    """Search the web for current information, news, or data not available in other tools.
+
+    Use this for:
+    - Cryptocurrency prices and data (Bitcoin, Ethereum, etc.)
+    - Commodity prices (gold, oil, silver, wheat, etc.)
+    - Recent financial news and events
+    - Economic indicators (inflation, GDP, unemployment rates)
+    - Information about private companies (not publicly traded)
+    - General financial questions requiring current web data
+
+    Args:
+        query: Search query in natural language (e.g. 'Bitcoin price today', 'current oil price WTI')
+    """
+    tavily_key = os.getenv("TAVILY_API_KEY", "")
+
+    # Try Tavily first (if API key is set)
+    if tavily_key:
+        try:
+            resp = httpx.post(
+                "https://api.tavily.com/search",
+                json={
+                    "api_key": tavily_key,
+                    "query": query,
+                    "search_depth": "basic",
+                    "max_results": 3,
+                },
+                timeout=15.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            results = data.get("results", [])
+            if not results:
+                return f"No web results found for: {query}"
+
+            output = f"Web search results for '{query}':\n\n"
+            for i, result in enumerate(results[:3], 1):
+                title = result.get("title", "")
+                content = result.get("content", "")
+                url = result.get("url", "")
+                output += f"{i}. {title}\n"
+                if content:
+                    # Limit content to ~200 chars per result
+                    output += f"   {content[:200]}{'...' if len(content) > 200 else ''}\n"
+                if url:
+                    output += f"   Source: {url}\n"
+                output += "\n"
+
+            return output.strip()
+
+        except Exception as exc:
+            print(f"tavily_search_failed query={query} error={exc}")
+            # Fall through to DuckDuckGo
+
+    # Fallback to DuckDuckGo (free, no API key needed)
+    try:
+        from duckduckgo_search import DDGS
+
+        with DDGS() as ddgs:
+            results = list(ddgs.text(query, max_results=3))
+
+        if not results:
+            return f"No web results found for: {query}"
+
+        output = f"Web search results for '{query}':\n\n"
+        for i, result in enumerate(results, 1):
+            title = result.get("title", "")
+            body = result.get("body", "")
+            href = result.get("href", "")
+            output += f"{i}. {title}\n"
+            if body:
+                output += f"   {body[:200]}{'...' if len(body) > 200 else ''}\n"
+            if href:
+                output += f"   Source: {href}\n"
+            output += "\n"
+
+        return output.strip()
+
+    except ImportError:
+        return (
+            "Web search unavailable: neither TAVILY_API_KEY is set nor "
+            "duckduckgo-search library is installed. Install with: "
+            "pip install duckduckgo-search"
+        )
+    except Exception as exc:
+        return f"Web search failed for '{query}': {exc}"
+
+
 TOOLS = [
     get_market_data,
     due_diligence_report,
@@ -494,4 +639,5 @@ TOOLS = [
     get_earnings_calendar,
     screen_stocks,
     get_fx_rate,
+    web_search,
 ]

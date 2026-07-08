@@ -16,6 +16,7 @@ build/
 .env.local
 .env.*.local
 .env.production
+RUNPOD_ENV_SETUP.md
 
 # Datasets & training artifacts (large files)
 datasets/

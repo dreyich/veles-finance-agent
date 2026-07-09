@@ -214,7 +214,8 @@ def build_agent_graph(tools: list):
             try:
                 response = orchestrator_with_tools.invoke(messages)
                 break
-            except Exception:
+            except Exception as e:
+                print(f"[DEBUG] Orchestrator attempt {attempt + 1}/{_MAX_ORCHESTRATOR_ATTEMPTS} failed: {type(e).__name__}: {e}")
                 if attempt == _MAX_ORCHESTRATOR_ATTEMPTS - 1:
                     response = AIMessage(content=(
                         "Вибачте, не вдалось обробити цей запит через тимчасову "

@@ -37,6 +37,11 @@ ORCHESTRATOR_BASE_URL = os.getenv("ORCHESTRATOR_BASE_URL", "http://localhost:114
 # Groq is free (with rate limits) and much smarter than 8b models for complex reasoning
 ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "llama3.2:3b")
 
+# Override stale RunPod template zy5axupfpa which has llama-3.1-8b-instant
+if ORCHESTRATOR_MODEL == "llama-3.1-8b-instant":
+    ORCHESTRATOR_MODEL = "llama-3.1-70b-versatile"
+    print(f"[orchestrator] Overriding stale template model to {ORCHESTRATOR_MODEL}")
+
 # Printed at import time (not just logged on failure) because the previous
 # silent fallback to the Ollama default cost real debugging time: a
 # production entrypoint that forgets to set ORCHESTRATOR_BASE_URL doesn't

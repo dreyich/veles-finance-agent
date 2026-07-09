@@ -33,9 +33,14 @@ MAX_TOOL_CALLS = 4
 
 ORCHESTRATOR_BASE_URL = os.getenv("ORCHESTRATOR_BASE_URL", "http://localhost:11434/v1")
 # Dev default: llama3.2:3b (lightweight, fits with Veles 7B on single GPU)
-# Prod default: llama-3.1-70b-versatile via Groq (.env.production)
-# Groq is free (with rate limits) and much smarter than 8b models for complex reasoning
+# Prod: llama-3.1-70b-versatile via Groq (.env.production)
 ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "llama3.2:3b")
+
+# WORKAROUND: RunPod template zy5axupfpa has stale llama-3.1-8b-instant
+# Override it to production 70b model
+if ORCHESTRATOR_MODEL == "llama-3.1-8b-instant":
+    ORCHESTRATOR_MODEL = "llama-3.1-70b-versatile"
+    ORCHESTRATOR_BASE_URL = "https://api.groq.com/openai/v1"
 
 # Printed at import time (not just logged on failure) because the previous
 # silent fallback to the Ollama default cost real debugging time: a

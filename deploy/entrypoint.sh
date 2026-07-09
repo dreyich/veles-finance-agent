@@ -51,30 +51,20 @@ export VELES_BASE_URL="http://localhost:${SGLANG_PORT}/v1"
 export VELES_MODEL="veles-finance-7b"
 export VELES_API_KEY="EMPTY"
 
-# Production env vars with fallbacks
-# DEBUG: Print what RunPod actually passes
-echo "[entrypoint] DEBUG env vars BEFORE fallback:"
-echo "  ORCHESTRATOR_BASE_URL='${ORCHESTRATOR_BASE_URL}'"
-echo "  ORCHESTRATOR_MODEL='${ORCHESTRATOR_MODEL}'"
-echo "  ORCHESTRATOR_API_KEY='${ORCHESTRATOR_API_KEY}'"
-echo "  TAVILY_API_KEY='${TAVILY_API_KEY}'"
+# Production env vars - fix RunPod template zy5axupfpa stale config
+echo "[entrypoint] RunPod passed ORCHESTRATOR_MODEL='${ORCHESTRATOR_MODEL}'"
 
-# Apply fallbacks only if empty or unset
+# RunPod template has stale llama-3.1-8b-instant - override to 70b if detected
+if [ "${ORCHESTRATOR_MODEL}" = "llama-3.1-8b-instant" ]; then
+  echo "[entrypoint] Detected stale template config, overriding to llama-3.1-70b-versatile"
+  export ORCHESTRATOR_MODEL="llama-3.1-70b-versatile"
+fi
+
+# Ensure base URL is set
 if [ -z "${ORCHESTRATOR_BASE_URL}" ]; then
   export ORCHESTRATOR_BASE_URL="https://api.groq.com/openai/v1"
 fi
-if [ -z "${ORCHESTRATOR_MODEL}" ]; then
-  export ORCHESTRATOR_MODEL="llama-3.1-70b-versatile"
-fi
-if [ -z "${ORCHESTRATOR_API_KEY}" ]; then
-  export ORCHESTRATOR_API_KEY=""
-fi
-if [ -z "${TAVILY_API_KEY}" ]; then
-  export TAVILY_API_KEY=""
-fi
 
-echo "[entrypoint] DEBUG env vars AFTER fallback:"
-echo "  ORCHESTRATOR_BASE_URL='${ORCHESTRATOR_BASE_URL}'"
-echo "  ORCHESTRATOR_MODEL='${ORCHESTRATOR_MODEL}'"
+echo "[entrypoint] Final ORCHESTRATOR_MODEL='${ORCHESTRATOR_MODEL}'"
 
 exec uvicorn main:api --host 0.0.0.0 --port "$API_PORT" --workers 1

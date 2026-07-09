@@ -51,12 +51,30 @@ export VELES_BASE_URL="http://localhost:${SGLANG_PORT}/v1"
 export VELES_MODEL="veles-finance-7b"
 export VELES_API_KEY="EMPTY"
 
-# Production env vars with fallbacks (RunPod endpoint env vars take precedence if set AND non-empty)
-# Use :- syntax which treats empty strings as unset (critical for RunPod which may pass empty env vars)
-: "${ORCHESTRATOR_BASE_URL:=https://api.groq.com/openai/v1}"
-: "${ORCHESTRATOR_MODEL:=llama-3.1-70b-versatile}"
-: "${ORCHESTRATOR_API_KEY:=}"
-: "${TAVILY_API_KEY:=}"
-export ORCHESTRATOR_BASE_URL ORCHESTRATOR_MODEL ORCHESTRATOR_API_KEY TAVILY_API_KEY
+# Production env vars with fallbacks
+# DEBUG: Print what RunPod actually passes
+echo "[entrypoint] DEBUG env vars BEFORE fallback:"
+echo "  ORCHESTRATOR_BASE_URL='${ORCHESTRATOR_BASE_URL}'"
+echo "  ORCHESTRATOR_MODEL='${ORCHESTRATOR_MODEL}'"
+echo "  ORCHESTRATOR_API_KEY='${ORCHESTRATOR_API_KEY}'"
+echo "  TAVILY_API_KEY='${TAVILY_API_KEY}'"
+
+# Apply fallbacks only if empty or unset
+if [ -z "${ORCHESTRATOR_BASE_URL}" ]; then
+  export ORCHESTRATOR_BASE_URL="https://api.groq.com/openai/v1"
+fi
+if [ -z "${ORCHESTRATOR_MODEL}" ]; then
+  export ORCHESTRATOR_MODEL="llama-3.1-70b-versatile"
+fi
+if [ -z "${ORCHESTRATOR_API_KEY}" ]; then
+  export ORCHESTRATOR_API_KEY=""
+fi
+if [ -z "${TAVILY_API_KEY}" ]; then
+  export TAVILY_API_KEY=""
+fi
+
+echo "[entrypoint] DEBUG env vars AFTER fallback:"
+echo "  ORCHESTRATOR_BASE_URL='${ORCHESTRATOR_BASE_URL}'"
+echo "  ORCHESTRATOR_MODEL='${ORCHESTRATOR_MODEL}'"
 
 exec uvicorn main:api --host 0.0.0.0 --port "$API_PORT" --workers 1

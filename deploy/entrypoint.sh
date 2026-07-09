@@ -51,11 +51,12 @@ export VELES_BASE_URL="http://localhost:${SGLANG_PORT}/v1"
 export VELES_MODEL="veles-finance-7b"
 export VELES_API_KEY="EMPTY"
 
-# Production env vars with fallbacks (RunPod endpoint env vars take precedence if set)
-export ORCHESTRATOR_BASE_URL="${ORCHESTRATOR_BASE_URL:-https://api.groq.com/openai/v1}"
-export ORCHESTRATOR_MODEL="${ORCHESTRATOR_MODEL:-llama-3.1-70b-versatile}"
-# API keys should be set via RunPod endpoint env vars, but provide empty fallback to avoid crashes
-export ORCHESTRATOR_API_KEY="${ORCHESTRATOR_API_KEY:-}"
-export TAVILY_API_KEY="${TAVILY_API_KEY:-}"
+# Production env vars with fallbacks (RunPod endpoint env vars take precedence if set AND non-empty)
+# Use :- syntax which treats empty strings as unset (critical for RunPod which may pass empty env vars)
+: "${ORCHESTRATOR_BASE_URL:=https://api.groq.com/openai/v1}"
+: "${ORCHESTRATOR_MODEL:=llama-3.1-70b-versatile}"
+: "${ORCHESTRATOR_API_KEY:=}"
+: "${TAVILY_API_KEY:=}"
+export ORCHESTRATOR_BASE_URL ORCHESTRATOR_MODEL ORCHESTRATOR_API_KEY TAVILY_API_KEY
 
 exec uvicorn main:api --host 0.0.0.0 --port "$API_PORT" --workers 1

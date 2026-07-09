@@ -36,12 +36,6 @@ ORCHESTRATOR_BASE_URL = os.getenv("ORCHESTRATOR_BASE_URL", "http://localhost:114
 # Prod: llama-3.1-70b-versatile via Groq (.env.production)
 ORCHESTRATOR_MODEL = os.getenv("ORCHESTRATOR_MODEL", "llama3.2:3b")
 
-# WORKAROUND: RunPod template zy5axupfpa has stale llama-3.1-8b-instant
-# Override it to production 70b model
-if ORCHESTRATOR_MODEL == "llama-3.1-8b-instant":
-    ORCHESTRATOR_MODEL = "llama-3.1-70b-versatile"
-    ORCHESTRATOR_BASE_URL = "https://api.groq.com/openai/v1"
-
 # Printed at import time (not just logged on failure) because the previous
 # silent fallback to the Ollama default cost real debugging time: a
 # production entrypoint that forgets to set ORCHESTRATOR_BASE_URL doesn't
